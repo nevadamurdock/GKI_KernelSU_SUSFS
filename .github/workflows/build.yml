@@ -266,6 +266,9 @@ jobs:
         # Mountify Support
         CONFIG_TMPFS_XATTR=y
         CONFIG_TMPFS_POSIX_ACL=y
+
+        # NAME
+        CONFIG_LOCALVERSION_AUTO=n
         
         EOF
 
@@ -441,19 +444,15 @@ jobs:
     - name: Change Kernel Name
       working-directory: ${{ env.KERNEL_ROOT }}
       run: |
-        # 1. Matikan LOCALVERSION_AUTO langsung di defconfig
-        DEFCONFIG="common/arch/arm64/configs/gki_defconfig"
-        if [ -f "$DEFCONFIG" ]; then
-          sed -i '/CONFIG_LOCALVERSION_AUTO/d' $DEFCONFIG
-          echo "CONFIG_LOCALVERSION_AUTO=n" >> $DEFCONFIG
-        fi
-
-        # 2. Wild to Kernel Version (Logic penamaan GusKernel)
+        #Wild to Kernel Version (replace last instance only)
         if [[ "${{ inputs.kernel_version }}" == "5."* ]] || [[ "${{ inputs.kernel_version }}" == "6.1" ]]; then
-          # Memaksa script setlocalversion untuk tidak menambahkan SCM version
-          sed -i 's/scm_version=true/scm_version=false/' ./common/scripts/setlocalversion
-          
           case ${{ matrix.build_type }} in
+            MarionKernel)
+              perl -i -0777 -pe 's/(.*)echo "\$res"/$1echo "\$res-GusKernel"/s' ./common/scripts/setlocalversion
+              ;;
+            Hakan)
+              perl -i -0777 -pe 's/(.*)echo "\$res"/$1echo "\$res-GusKernel"/s' ./common/scripts/setlocalversion
+              ;;
             *)
               perl -i -0777 -pe 's/(.*)echo "\$res"/$1echo "\$res-GusKernel"/s' ./common/scripts/setlocalversion
               ;;
@@ -461,24 +460,24 @@ jobs:
         else
           perl -i -0777 -pe 's/(.*)echo "\$\{KERNELVERSION\}\$\{file_localversion\}\$\{config_localversion\}\$\{LOCALVERSION\}\$\{scm_version\}"/$1echo "\${KERNELVERSION}\${file_localversion}\${config_localversion}\${LOCALVERSION}-GusKernel\${scm_version}"/s' ./common/scripts/setlocalversion
         fi
-
-        # 3. Pembersihan Dirty Flag (Agar versi tetap bersih)
         export KBUILD_BUILD_TIMESTAMP="$(date -u '+%a %b %e %H:%M:%S UTC %Y')"
-        sed -i 's/-dirty//' ./common/scripts/setlocalversion
-        
-        if [ ! -f "build/build.sh" ]; then
-          # Fix untuk sistem build Bazel/Kleaf
-          sed -i "/stable_scmversion_cmd/s/-maybe-dirty//g" ./build/kernel/kleaf/impl/stamp.bzl 2>/dev/null || true
+        if [ -f "build/build.sh" ]; then
+          #Remove Dirty Flag
+          sed -i 's/-dirty//' ./common/scripts/setlocalversion
+        else
+          #Remove Dirty Flag
+          sed -i "/stable_scmversion_cmd/s/-maybe-dirty//g" ./build/kernel/kleaf/impl/stamp.bzl
+          sed -i 's/-dirty//' ./common/scripts/setlocalversion
+          #Remove Abi Exports and Error
           rm -rf ./common/android/abi_gki_protected_exports_*
           perl -pi -e 's/^\s*"protected_exports_list"\s*:\s*"android\/abi_gki_protected_exports_aarch64",\s*$//;' ./common/BUILD.bazel
         fi
 
-        # 4. Commit perubahan agar tidak dianggap 'dirty' oleh kbuild
         cd $KERNEL_ROOT/common
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         git add .
-        git commit -m "Build: Set Localversion and disable Localversion_auto"
+        git commit -m "Wild: Clean Dirty Flag"
 
     - name: Build Kernel
       working-directory: ${{ env.KERNEL_ROOT }}
