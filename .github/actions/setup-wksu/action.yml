@@ -21,16 +21,16 @@ runs:
         echo "========================================"
         if [[ -n "${{ inputs.ksu_commit }}" ]]; then
           echo "Using commit: ${{ inputs.ksu_commit }}"
-          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s "${{ inputs.ksu_commit }}"
+          curl -LSs "https://raw.githubusercontent.com/WildKernels/Wild_KSU/stable/kernel/setup.sh" | bash -s "${{ inputs.ksu_commit }}"
         else
-          echo "dev"
-          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s dev
+          echo "Using canary build"
+          curl -LSs "https://raw.githubusercontent.com/WildKernels/Wild_KSU/stable/kernel/setup.sh" | bash -s canary
         fi
     
     - name: Extract KSU Version Info
       id: ksu-version
       shell: bash
-      working-directory: ${{ inputs.kernel_root }}/KernelSU-Next
+      working-directory: ${{ inputs.kernel_root }}/Wild_KSU
       run: |
         KSU_GIT_VERSION=$(git rev-list --count HEAD 2>/dev/null)
         KSU_GIT_TAG=$(git describe --tags --abbrev=0 2>/dev/null)
