@@ -163,13 +163,7 @@ jobs:
     - build-a12-5-10
     - build-a13-5-10
     - build-a13-5-15
-    - build-a14-5-15
-    - build-a14-6-1
-    - build-a15-6-6
-    - build-a16-6-12
-    - build-custom
-    - build-lts
-    - build-testing
+    
     steps:
     - name: Download Misc Artifacts
       uses: actions/download-artifact@v5
@@ -230,13 +224,7 @@ jobs:
     - build-a12-5-10
     - build-a13-5-10
     - build-a13-5-15
-    - build-a14-5-15
-    - build-a14-6-1
-    - build-a15-6-6
-    - build-a16-6-12
-    - build-lts
-    - build-custom
-    - build-testing
+    
 
     env:
       GH_TOKEN: ${{ github.token }}
