@@ -30,7 +30,7 @@ runs:
     - name: Extract KSU Version Info
       id: ksu-version
       shell: bash
-      working-directory: ${{ inputs.kernel_root }}/KernelSU-Next
+      working-directory: ${{ inputs.kernel_root }}/dev-susfs
       run: |
         KSU_GIT_VERSION=$(git rev-list --count HEAD 2>/dev/null)
         KSU_GIT_TAG=$(git describe --tags --abbrev=0 2>/dev/null)
