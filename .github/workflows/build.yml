@@ -266,9 +266,6 @@ jobs:
         # Mountify Support
         CONFIG_TMPFS_XATTR=y
         CONFIG_TMPFS_POSIX_ACL=y
-
-        # NAME
-        CONFIG_LOCALVERSION_AUTO=n
         
         EOF
 
