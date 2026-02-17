@@ -29,13 +29,7 @@ on:
           - a12-5-10
           - a13-5-10
           - a13-5-15
-          - a14-5-15
-          - a14-6-1
-          - a15-6-6
-          - a16-6-12
-          - lts
-          - custom
-          - testing
+          
         default: custom
       feature_set:
         description: "Feature Set"
