@@ -445,13 +445,13 @@ jobs:
         if [[ "${{ inputs.kernel_version }}" == "5."* ]] || [[ "${{ inputs.kernel_version }}" == "6.1" ]]; then
           case ${{ matrix.build_type }} in
             MarionKernel)
-              perl -i -0777 -pe 's/(.*)echo "\$res"/$1echo "\$res-Wild-MarionKernel"/s' ./common/scripts/setlocalversion
+              perl -i -0777 -pe 's/(.*)echo "\$res"/$1echo "\$res-GusKernel"/s' ./common/scripts/setlocalversion
               ;;
             Hakan)
-              perl -i -0777 -pe 's/(.*)echo "\$res"/$1echo "\$res-Wild-Hakan"/s' ./common/scripts/setlocalversion
+              perl -i -0777 -pe 's/(.*)echo "\$res"/$1echo "\$res-GusKernel"/s' ./common/scripts/setlocalversion
               ;;
             *)
-              perl -i -0777 -pe 's/(.*)echo "\$res"/$1echo "\$res-Wild"/s' ./common/scripts/setlocalversion
+              perl -i -0777 -pe 's/(.*)echo "\$res"/$1echo "\$res-GusKernel"/s' ./common/scripts/setlocalversion
               ;;
           esac
         else
