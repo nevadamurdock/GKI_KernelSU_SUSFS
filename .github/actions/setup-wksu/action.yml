@@ -21,10 +21,10 @@ runs:
         echo "========================================"
         if [[ -n "${{ inputs.ksu_commit }}" ]]; then
           echo "Using commit: ${{ inputs.ksu_commit }}"
-          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/dev-susfs/kernel/setup.sh" | bash -s "${{ inputs.ksu_commit }}"
+          curl -LSs "https://raw.githubusercontent.com/backslashxx/KernelSU/kernel/setup.sh" | bash -s "${{ inputs.ksu_commit }}"
         else
           echo "dev-susfs"
-          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/dev-susfs/kernel/setup.sh" | bash -s dev_susfs
+          curl -LSs "https://raw.githubusercontent.com/backslashxx/KernelSU/kernel/setup.sh" | bash -s master
         fi
     
     - name: Extract KSU Version Info
