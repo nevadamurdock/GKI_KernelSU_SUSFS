@@ -21,10 +21,10 @@ runs:
         echo "========================================"
         if [[ -n "${{ inputs.ksu_commit }}" ]]; then
           echo "Using commit: ${{ inputs.ksu_commit }}"
-          curl -LSs "https://raw.githubusercontent.com/WildKernels/Wild_KSU/stable/kernel/setup.sh" | bash -s "${{ inputs.ksu_commit }}"
+          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s "${{ inputs.ksu_commit }}"
         else
           echo "Using canary build"
-          curl -LSs "https://raw.githubusercontent.com/WildKernels/Wild_KSU/stable/kernel/setup.sh" | bash -s canary
+          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s stable
         fi
     
     - name: Extract KSU Version Info
