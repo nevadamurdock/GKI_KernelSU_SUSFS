@@ -455,7 +455,7 @@ jobs:
               ;;
           esac
         else
-          perl -i -0777 -pe 's/(.*)echo "\$\{KERNELVERSION\}\$\{file_localversion\}\$\{config_localversion\}\$\{LOCALVERSION\}\$\{scm_version\}"/$1echo "\${KERNELVERSION}\${file_localversion}\${config_localversion}\${LOCALVERSION}-Wild\${scm_version}"/s' ./common/scripts/setlocalversion
+          perl -i -0777 -pe 's/(.*)echo "\$\{KERNELVERSION\}\$\{file_localversion\}\$\{config_localversion\}\$\{LOCALVERSION\}\$\{scm_version\}"/$1echo "\${KERNELVERSION}\${file_localversion}\${config_localversion}\${LOCALVERSION}-GusKernel\${scm_version}"/s' ./common/scripts/setlocalversion
         fi
         export KBUILD_BUILD_TIMESTAMP="$(date -u '+%a %b %e %H:%M:%S UTC %Y')"
         if [ -f "build/build.sh" ]; then
