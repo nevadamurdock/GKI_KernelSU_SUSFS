@@ -23,7 +23,7 @@ runs:
           echo "Using commit: ${{ inputs.ksu_commit }}"
           curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/dev-susfs/kernel/setup.sh" | bash -s "${{ inputs.ksu_commit }}"
         else
-          echo "Using canary build"
+          echo "dev-susfs"
           curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/dev-susfs/kernel/setup.sh" | bash -s dev-susfs
         fi
     
