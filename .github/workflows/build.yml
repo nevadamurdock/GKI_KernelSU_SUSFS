@@ -479,25 +479,38 @@ jobs:
     - name: Build Kernel
       working-directory: ${{ env.KERNEL_ROOT }}
       run: |
-        set -ex
-         # Pastikan path fragment benar dan variabel env tersedia
-         if [ -f "build/build.sh" ]; then
-         # Untuk build.sh, gunakan LTO=thin sebagai standar
-          GKI_DEFCONFIG_FRAGMENT="${{ env.DEFCONFIG_FRAGMENT }}" \
-           LTO=thin \
-            BUILD_CONFIG=common/build.config.gki.aarch64 \
-             build/build.sh || exit 1
-         else
-         # Untuk Bazel (Kleaf), GKI 5.10 tetap butuh LTO thin/full
-         # Jangan gunakan lto=none kecuali hanya untuk testing kompilasi cepat
-          if [[ "${{ env.ANDROID_VERSION }}" == "android14" ]]; then
-             tools/bazel build --config=fast --lto=thin --defconfig_fragment=//common:arch/arm64/configs/wild_gki.fragment //common:kernel_aarch64_dist || exit 1
-           else
-           # Ganti none menjadi thin
-           tools/bazel build --config=fast --lto=thin --defconfig_fragment=//common:arch/arm64/configs/wild_gki.fragment //common:kernel_aarch64_dist || exit 1
-         fi
+        # 1. FIX LINKER (WAJIB untuk BBG)
+        sudo ln -sf /usr/bin/ld.lld /usr/bin/ld
+
+        # 2. FIX LSM CONFIG (WAJIB untuk BBG)
+        # Menambahkan baseband_guard ke dalam urutan LSM di gki_defconfig
+        DEFCONFIG="common/arch/arm64/configs/gki_defconfig"
+        if [ -f "$DEFCONFIG" ]; then
+          # Hapus line LSM yang lama jika ada, lalu tambah yang baru dengan baseband_guard di depan
+          sed -i '/CONFIG_LSM/d' "$DEFCONFIG"
+          echo 'CONFIG_LSM="baseband_guard,lockdown,yama,loadpin,safesetid,selinux,integrity,apparmor"' >> "$DEFCONFIG"
+          
+          # Pastikan CONFIG_BBG aktif agar sinkron dengan LSM
+          sed -i '/CONFIG_BBG/d' "$DEFCONFIG"
+          echo "CONFIG_BBG=y" >> "$DEFCONFIG"
         fi
 
+        # 3. JALANKAN BUILD
+        set -ex
+        if [ -f "build/build.sh" ]; then
+          # Gunakan LTO=thin (Jangan none agar Wi-Fi/BT tidak rusak)
+          GKI_DEFCONFIG_FRAGMENT="${{ env.DEFCONFIG_FRAGMENT }}" \
+          LTO=thin \
+          BUILD_CONFIG=common/build.config.gki.aarch64 \
+          build/build.sh || exit 1
+        else
+          # Build menggunakan Bazel (Kleaf)
+          # Ganti LTO none menjadi thin untuk Android 12
+          tools/bazel build --config=fast --lto=thin \
+          --defconfig_fragment=//common:arch/arm64/configs/wild_gki.fragment \
+          //common:kernel_aarch64_dist || exit 1
+        fi
+ 
     - name: Prepare AnyKernel3 Zip
       run: |
         # Copy Image from normal build locations
