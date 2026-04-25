@@ -1157,59 +1157,67 @@ jobs:
       # ==================== Upload to Telegram ====================
       - name: Upload Artifact ke Telegram
         if: success()
+
         env:
-          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-          CHAT_ID: ${{ secrets.CHAT_ID_3 }}
+          BOT_TOKEN:         ${{ secrets.BOT_TOKEN }}
+          CHAT_ID:           ${{ secrets.CHAT_ID_3 }}
           MESSAGE_THREAD_ID: ${{ secrets.MESSAGE_THREAD_ID_3 }}
+
         run: |
-          # 1. Cari file .zip di direktori kerja saat ini (.)
-          # Kita gunakan -not -path '*/.*' agar tidak mencari di folder tersembunyi seperti .git
-          ARTIFACT_FILES=$(find . -name "*.zip" -not -path '*/.*')
-          
-          # Jika masih tidak ketemu, coba cari AnyKernel3 secara spesifik
-          if [ -z "$ARTIFACT_FILES" ]; then
-             ARTIFACT_FILES=$(find . -name "AnyKernel3*.zip")
-          fi
+          set -e
 
-          COUNT=$(echo "$ARTIFACT_FILES" | wc -w)
+            # =========================
+            # Collect artifacts
+            # =========================
+            ARTIFACT_FILES=$(find . -maxdepth 3 -type f -name "*.zip" \
+            ! -path '*/.*' \
+            ! -name "ZRAM.zip" \
+            ! -name "test_mappings.zip")
 
-          if [ "$COUNT" -eq 0 ]; then
-            echo "⚠️ Tidak ada file .zip yang ditemukan di $(pwd)"
+            COUNT=$(echo "$ARTIFACT_FILES" | wc -w)
+
+            if [ "$COUNT" -eq 0 ]; then
+            echo "No artifacts found."
             exit 0
-          fi
+            fi
 
-          # 2. Siapkan deskripsi fitur
-          CAPTION="✅ <b>GusKernel Build Success!</b>%0A"
-          CAPTION+="━━━━━━━━━━━━━━━━━━━━━%0A"
-          CAPTION+="<b>Manager / Features:</b>%0A"
-          CAPTION+="• Multi manager support%0A"
-          CAPTION+="• SusFS%0A"
-          CAPTION+="• Enable improved ZRAM algorithm%0A"
-          CAPTION+="• Activate BBG anti-grid engine%0A"
-          CAPTION+="• Enable KPM functionality%0A"
-          CAPTION+="• Enable Re-Kernel driver%0A"
-          CAPTION+="━━━━━━━━━━━━━━━━━━━━━%0A"
-          CAPTION+="🔢 <b>Total Files:</b> $COUNT"
 
-          echo "🚀 Mengirim $COUNT artifact ke Telegram..."
+            # =========================
+            # Base caption
+            # =========================
+            read -r -d '' CAPTION <<EOF
+            ✅ <b>GusKernel Build Success!</b>
+            ━━━━━━━━━━━━━━━━━━━━━
+            <b>Manager / Features:</b>
+            • Multi manager support
+            • SusFS
+            • Enable improved ZRAM algorithm
+            • Activate BBG anti-grid engine
+            • Enable KPM functionality
+            • Enable Re-Kernel driver
+            ━━━━━━━━━━━━━━━━━━━━━
+            🔢 <b>Total Files:</b> $COUNT
+            EOF
 
-          # 3. Loop kirim file
-          for FILE in $ARTIFACT_FILES; do
+
+            # =========================
+            # Upload loop
+            # =========================
+            for FILE in $ARTIFACT_FILES; do
             FILENAME=$(basename "$FILE")
-            echo "📤 Memproses: $FILENAME"
-            
-            RESPONSE=$(curl -s -F chat_id="${CHAT_ID}" \
+
+            echo "Uploading: $FILENAME"
+
+            FINAL_CAPTION="${CAPTION}
+            📦 <b>File:</b> <code>${FILENAME}</code>"
+
+          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendDocument" \
+              -F chat_id="${CHAT_ID}" \
               -F message_thread_id="${MESSAGE_THREAD_ID}" \
               -F document=@"${FILE}" \
-              -F caption="${CAPTION}%0A📦 <b>File:</b> <code>$FILENAME</code>" \
               -F parse_mode="HTML" \
-              "https://api.telegram.org/bot${BOT_TOKEN}/sendDocument")
-            
-            if echo "$RESPONSE" | grep -q '"ok":true'; then
-              echo "✅ Terkirim: $FILENAME"
-            else
-              echo "❌ Gagal mengirim $FILENAME: $RESPONSE"
-            fi
+              --form-string "caption=${FINAL_CAPTION}"
+
             sleep 2
           done
           
