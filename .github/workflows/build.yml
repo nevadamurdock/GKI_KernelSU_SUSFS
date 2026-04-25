@@ -1162,18 +1162,23 @@ jobs:
           CHAT_ID: ${{ secrets.CHAT_ID_3 }}
           MESSAGE_THREAD_ID: ${{ secrets.MESSAGE_THREAD_ID_3 }}
         run: |
-          # 1. Cari semua file .zip hasil build
-          # Pastikan path 'out/' sudah sesuai dengan lokasi output build kamu
-          ARTIFACT_FILES=$(find out/ -name "*.zip")
+          # 1. Cari file .zip di direktori kerja saat ini (.)
+          # Kita gunakan -not -path '*/.*' agar tidak mencari di folder tersembunyi seperti .git
+          ARTIFACT_FILES=$(find . -name "*.zip" -not -path '*/.*')
+          
+          # Jika masih tidak ketemu, coba cari AnyKernel3 secara spesifik
+          if [ -z "$ARTIFACT_FILES" ]; then
+             ARTIFACT_FILES=$(find . -name "AnyKernel3*.zip")
+          fi
+
           COUNT=$(echo "$ARTIFACT_FILES" | wc -w)
 
           if [ "$COUNT" -eq 0 ]; then
-            echo "⚠️ Tidak ada file .zip yang ditemukan."
+            echo "⚠️ Tidak ada file .zip yang ditemukan di $(pwd)"
             exit 0
           fi
 
-          # 2. Siapkan deskripsi fitur (HTML Format)
-          # Gunakan %0A untuk baris baru agar terbaca benar oleh API Telegram
+          # 2. Siapkan deskripsi fitur
           CAPTION="✅ <b>GusKernel Build Success!</b>%0A"
           CAPTION+="━━━━━━━━━━━━━━━━━━━━━%0A"
           CAPTION+="<b>Manager / Features:</b>%0A"
@@ -1191,18 +1196,23 @@ jobs:
           # 3. Loop kirim file
           for FILE in $ARTIFACT_FILES; do
             FILENAME=$(basename "$FILE")
+            echo "📤 Memproses: $FILENAME"
             
-            curl -s -F chat_id="${CHAT_ID}" \
+            RESPONSE=$(curl -s -F chat_id="${CHAT_ID}" \
               -F message_thread_id="${MESSAGE_THREAD_ID}" \
               -F document=@"${FILE}" \
               -F caption="${CAPTION}%0A📦 <b>File:</b> <code>$FILENAME</code>" \
               -F parse_mode="HTML" \
-              "https://api.telegram.org/bot${BOT_TOKEN}/sendDocument" > /dev/null
+              "https://api.telegram.org/bot${BOT_TOKEN}/sendDocument")
             
-            echo "✅ Terkirim: $FILENAME"
-            sleep 1
+            if echo "$RESPONSE" | grep -q '"ok":true'; then
+              echo "✅ Terkirim: $FILENAME"
+            else
+              echo "❌ Gagal mengirim $FILENAME: $RESPONSE"
+            fi
+            sleep 2
           done
-
+          
       # ==================== 上传补丁冲突文件 ====================
       - name: 上传补丁冲突文件
         if: always() && env.REJ_COUNT > 0
