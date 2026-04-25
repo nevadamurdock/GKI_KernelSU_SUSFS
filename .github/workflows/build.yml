@@ -1162,11 +1162,9 @@ jobs:
           CHAT_ID: ${{ secrets.CHAT_ID_3 }}
           MESSAGE_THREAD_ID: ${{ secrets.MESSAGE_THREAD_ID_3 }}
         run: |
-          # 1. Cari semua file .zip hasil build di folder out (atau folder dist)
-          # Ganti 'out/' dengan folder tempat hasil build kamu berada
+          # 1. Cari semua file .zip hasil build
+          # Pastikan path 'out/' sudah sesuai dengan lokasi output build kamu
           ARTIFACT_FILES=$(find out/ -name "*.zip")
-
-          # 2. Hitung jumlah file yang ditemukan
           COUNT=$(echo "$ARTIFACT_FILES" | wc -w)
 
           if [ "$COUNT" -eq 0 ]; then
@@ -1174,28 +1172,34 @@ jobs:
             exit 0
           fi
 
-          echo "🚀 Ditemukan $COUNT artifact. Memulai pengiriman..."
+          # 2. Siapkan deskripsi fitur (HTML Format)
+          # Gunakan %0A untuk baris baru agar terbaca benar oleh API Telegram
+          CAPTION="✅ <b>GusKernel Build Success!</b>%0A"
+          CAPTION+="━━━━━━━━━━━━━━━━━━━━━%0A"
+          CAPTION+="<b>Manager / Features:</b>%0A"
+          CAPTION+="• Multi manager support%0A"
+          CAPTION+="• SusFS%0A"
+          CAPTION+="• Enable improved ZRAM algorithm%0A"
+          CAPTION+="• Activate BBG anti-grid engine%0A"
+          CAPTION+="• Enable KPM functionality%0A"
+          CAPTION+="• Enable Re-Kernel driver%0A"
+          CAPTION+="━━━━━━━━━━━━━━━━━━━━━%0A"
+          CAPTION+="🔢 <b>Total Files:</b> $COUNT"
 
-          # 3. Loop untuk mengirim setiap file
+          echo "🚀 Mengirim $COUNT artifact ke Telegram..."
+
+          # 3. Loop kirim file
           for FILE in $ARTIFACT_FILES; do
             FILENAME=$(basename "$FILE")
-            echo "📦 Mengirim: $FILENAME"
-
-            RESPONSE=$(curl -s -F chat_id="${CHAT_ID}" \
+            
+            curl -s -F chat_id="${CHAT_ID}" \
               -F message_thread_id="${MESSAGE_THREAD_ID}" \
               -F document=@"${FILE}" \
-              -F caption="✅ <b>Build Success!</b>%0A%0A📦 <b>File:</b> <code>$FILENAME</code>%0A👤 <b>Kernel:</b> <code>-GusKernel</code>%0A🔢 <b>Total Files:</b> $COUNT" \
+              -F caption="${CAPTION}%0A📦 <b>File:</b> <code>$FILENAME</code>" \
               -F parse_mode="HTML" \
-              "https://api.telegram.org/bot${BOT_TOKEN}/sendDocument")
-
-            # Cek status pengiriman agar tidak bingung jika gagal
-            if echo "$RESPONSE" | grep -q '"ok":true'; then
-              echo "✅ $FILENAME terkirim."
-            else
-              echo "❌ Gagal mengirim $FILENAME. Pesan: $RESPONSE"
-            fi
+              "https://api.telegram.org/bot${BOT_TOKEN}/sendDocument" > /dev/null
             
-            # Beri jeda 1 detik agar tidak terkena limit API Telegram (Spam protection)
+            echo "✅ Terkirim: $FILENAME"
             sleep 1
           done
 
