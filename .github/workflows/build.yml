@@ -1153,6 +1153,51 @@ jobs:
             *AnyKernel3.zip
             *.img
           compression-level: 9
+          
+      # ==================== Upload to Telegram ====================
+      - name: Upload Artifact ke Telegram
+        if: success()
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID_3 }}
+          MESSAGE_THREAD_ID: ${{ secrets.MESSAGE_THREAD_ID_3 }}
+        run: |
+          # 1. Cari semua file .zip hasil build di folder out (atau folder dist)
+          # Ganti 'out/' dengan folder tempat hasil build kamu berada
+          ARTIFACT_FILES=$(find out/ -name "*.zip")
+
+          # 2. Hitung jumlah file yang ditemukan
+          COUNT=$(echo "$ARTIFACT_FILES" | wc -w)
+
+          if [ "$COUNT" -eq 0 ]; then
+            echo "⚠️ Tidak ada file .zip yang ditemukan."
+            exit 0
+          fi
+
+          echo "🚀 Ditemukan $COUNT artifact. Memulai pengiriman..."
+
+          # 3. Loop untuk mengirim setiap file
+          for FILE in $ARTIFACT_FILES; do
+            FILENAME=$(basename "$FILE")
+            echo "📦 Mengirim: $FILENAME"
+
+            RESPONSE=$(curl -s -F chat_id="${CHAT_ID}" \
+              -F message_thread_id="${MESSAGE_THREAD_ID}" \
+              -F document=@"${FILE}" \
+              -F caption="✅ <b>Build Success!</b>%0A%0A📦 <b>File:</b> <code>$FILENAME</code>%0A👤 <b>Kernel:</b> <code>-GusKernel</code>%0A🔢 <b>Total Files:</b> $COUNT" \
+              -F parse_mode="HTML" \
+              "https://api.telegram.org/bot${BOT_TOKEN}/sendDocument")
+
+            # Cek status pengiriman agar tidak bingung jika gagal
+            if echo "$RESPONSE" | grep -q '"ok":true'; then
+              echo "✅ $FILENAME terkirim."
+            else
+              echo "❌ Gagal mengirim $FILENAME. Pesan: $RESPONSE"
+            fi
+            
+            # Beri jeda 1 detik agar tidak terkena limit API Telegram (Spam protection)
+            sleep 1
+          done
 
       # ==================== 上传补丁冲突文件 ====================
       - name: 上传补丁冲突文件
