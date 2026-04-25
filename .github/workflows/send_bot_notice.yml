@@ -51,7 +51,7 @@ jobs:
             -d "text=${TEXT}")
 
           RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
-            -d "chat_id=-1003567736013" \
+            -d "chat_id=-1003735493332" \
             -d "parse_mode=HTML" \
             -d "text=${TEXT}")
           
