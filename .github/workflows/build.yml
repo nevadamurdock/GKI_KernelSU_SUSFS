@@ -857,6 +857,13 @@ jobs:
       - name: 配置内核名称
         working-directory: ${{ env.KERNEL_ROOT }}
         run: |
+          # --- TAMBAHAN: Set Custom Local Version ---
+          # Ini akan mengubah CONFIG_LOCALVERSION di file defconfig secara paksa
+          find ./common/arch/arm64/configs/ -name "gki_defconfig" -exec sed -i 's/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION="-GusKernel"/' {} +
+          # Mematikan auto version agar tidak berantakan
+          find ./common/arch/arm64/configs/ -name "gki_defconfig" -exec sed -i 's/^CONFIG_LOCALVERSION_AUTO=.*/CONFIG_LOCALVERSION_AUTO=n/' {} +
+          # ------------------------------------------
+
           if [ -f "build/build.sh" ]; then
             sed -i 's/-dirty//' ./common/scripts/setlocalversion
           else
@@ -867,11 +874,10 @@ jobs:
             sed -i "/stable_scmversion_cmd/s/-maybe-dirty//g" ./build/kernel/kleaf/impl/stamp.bzl
           fi
 
-          # 配置内核名称
+          # 配置内核名称 (Sisanya tetap sama agar tidak merusak logika KMI_TAG)
           if [ -n "${{ inputs.version }}" ]; then
             CLEAN_VERSION=$(echo "${{ inputs.version }}" | sed -E 's/^[0-9]+\.[0-9]+\.[0-9]+//')
             
-            # 定义 KMI_TAG（与自动版本保持一致）
             case "${{ inputs.android_version }}-${{ inputs.kernel_version }}" in
               "android14-6.1")  KMI_TAG="android14-11" ;;
               "android15-6.6")  KMI_TAG="android15-8" ;;
@@ -880,24 +886,21 @@ jobs:
             esac
             
             if [ "${{ inputs.kernel_version }}" = "6.1" ]; then
-              # 6.1：旧格式，包含 KMI_TAG
-              KMI_LOCAL="-${KMI_TAG}${CLEAN_VERSION}"
+              KMI_LOCAL="-GusKernel-${KMI_TAG}${CLEAN_VERSION}"
               sed -i "\$s|echo \"\$res\"|echo \"${KMI_LOCAL}\"|" ./common/scripts/setlocalversion 2>/dev/null || true
               sed -i "/^CONFIG_LOCALVERSION=/ s/=\"[^\"]*\"/=\"${KMI_LOCAL}\"/" ./common/arch/arm64/configs/gki_defconfig 2>/dev/null || true
             elif [ "${{ inputs.kernel_version }}" = "5.10" ] || [ "${{ inputs.kernel_version }}" = "5.15" ]; then
-              # 5.x：旧格式，不包含 KMI_TAG
-              sed -i "\$s|echo \"\$res\"|echo \"${CLEAN_VERSION}\"|" ./common/scripts/setlocalversion 2>/dev/null || true
-              sed -i '/^CONFIG_LOCALVERSION=/ s/="\([^"]*\)"/="'"$CLEAN_VERSION"'"/' ./common/arch/arm64/configs/gki_defconfig
+              sed -i "\$s|echo \"\$res\"|echo \"-GusKernel${CLEAN_VERSION}\"|" ./common/scripts/setlocalversion 2>/dev/null || true
+              sed -i '/^CONFIG_LOCALVERSION=/ s/="\([^"]*\)"/="-GusKernel"/' ./common/arch/arm64/configs/gki_defconfig
             else
-              # 6.6+：新格式 setlocalversion，包含 KMI_TAG
-              SUFFIX="-${KMI_TAG}${CLEAN_VERSION}"
+              SUFFIX="-GusKernel-${KMI_TAG}${CLEAN_VERSION}"
               perl -i -0777 -pe 's/(.*)echo "\$\{KERNELVERSION\}\$\{file_localversion\}\$\{config_localversion\}\$\{LOCALVERSION\}\$\{scm_version\}"/$1echo "\$\{KERNELVERSION\}'"${SUFFIX}"'"/s' ./common/scripts/setlocalversion 2>/dev/null || true
             fi
           elif [ ! -f "build/build.sh" ]; then
             cd ./common
             BID="ab$((RANDOM % 90000000 + 10000000))"
             GHASH=$(git rev-parse --verify HEAD | cut -c1-13)
-            # 统一内核名称格式：-androidXX-KMI-gHASH-BID-4k
+            
             case "${{ inputs.android_version }}-${{ inputs.kernel_version }}" in
               "android14-6.1")  KMI_TAG="android14-11" ;;
               "android15-6.6")  KMI_TAG="android15-8" ;;
@@ -906,14 +909,11 @@ jobs:
             esac
 
             if [ "${{ inputs.kernel_version }}" = "6.1" ]; then
-              # 6.1：通过 setlocalversion 注入版本名称（旧格式）
-              KMI_LOCAL="-${KMI_TAG}-g${GHASH}-${BID}-4k"
+              KMI_LOCAL="-GusKernel-${KMI_TAG}-g${GHASH}-${BID}-4k"
               sed -i "\$s|echo \"\$res\"|echo \"${KMI_LOCAL}\"|" ./scripts/setlocalversion 2>/dev/null || true
               sed -i "/^CONFIG_LOCALVERSION=/ s/=\"[^\"]*\"/=\"${KMI_LOCAL}\"/" ./arch/arm64/configs/gki_defconfig 2>/dev/null || true
             else
-              # 6.6+：修改 setlocalversion 注入版本名称（新格式，参考 wild_kernel）
-              # 保留 ${KERNELVERSION} 和 ${config_localversion} 由脚本运行时解析
-              SUFFIX="-${KMI_TAG}-g${GHASH}-${BID}"
+              SUFFIX="-GusKernel-${KMI_TAG}-g${GHASH}-${BID}"
               perl -i -0777 -pe 's/(.*)echo "\$\{KERNELVERSION\}\$\{file_localversion\}\$\{config_localversion\}\$\{LOCALVERSION\}\$\{scm_version\}"/$1echo "\$\{KERNELVERSION\}'"${SUFFIX}"'\$\{config_localversion\}"/s' ./scripts/setlocalversion 2>/dev/null || true
             fi
           fi
