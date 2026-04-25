@@ -1155,57 +1155,54 @@ jobs:
           compression-level: 9
           
       # ==================== Upload to Telegram ====================
-      - name: Upload Artifact ke Telegram
+      - name: Upload Artifact ke Telegram (Private)
         if: success()
         env:
-            BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-            CHAT_ID: ${{ secrets.CHAT_ID_3 }}
-            MESSAGE_THREAD_ID: ${{ secrets.MESSAGE_THREAD_ID_3 }}
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          # Pastikan CHAT_ID di GitHub Secrets berisi ID akun pribadimu
+          CHAT_ID: ${{ secrets.CHAT_ID_3 }}
         run: |
-          # 1. Ambil Artifact
+          # 1. Cari file .zip hasil build (Filter ZRAM dan Test Mappings)
           ARTIFACT_FILES=$(find . -maxdepth 3 -type f -name "*.zip" \
-            ! -path '*/.*' \
-            ! -name "ZRAM.zip" \
-            ! -name "test_mappings.zip")
+          ! -path '*/.*' \
+          ! -name "ZRAM.zip" \
+          ! -name "test_mappings.zip")
 
-            COUNT=$(echo "$ARTIFACT_FILES" | wc -w)
+          COUNT=$(echo "$ARTIFACT_FILES" | wc -w)
 
-            if [ "$COUNT" -eq 0 ]; then
-                echo "No artifacts found."
-              exit 0
-            fi
+          if [ "$COUNT" -eq 0 ]; then
+            echo "⚠️ Tidak ada file artifact ditemukan."
+            exit 0
+          fi
 
-                  # 2. Buat Base Caption (Gunakan \n untuk baris baru agar aman)
-                    CAPTION="✅ <b>GusKernel Build Success!</b>
-                    ━━━━━━━━━━━━━━━━━━━━━
-                    <b>Manager / Features:</b>
-                    • Multi manager support
-                    • SusFS
-                    • Enable improved ZRAM algorithm
-                    • Activate BBG anti-grid engine
-                    • Enable KPM functionality
-                    • Enable Re-Kernel driver
-                      ━━━━━━━━━━━━━━━━━━━━━
-                    🔢 <b>Total Files:</b> $COUNT"
+          # 2. Siapkan Caption
+          CAPTION="✅ <b>GusKernel Build Success!</b>
+          ━━━━━━━━━━━━━━━━━━━━━
+          <b>Manager / Features:</b>
+          • Multi manager support
+          • SusFS
+          • Enable improved ZRAM algorithm
+          • Activate BBG anti-grid engine
+          • Enable KPM functionality
+          • Enable Re-Kernel driver
+          ━━━━━━━━━━━━━━━━━━━━━
+          🔢 <b>Total Files:</b> $COUNT"
 
-                  # 3. Upload Loop
-                for FILE in $ARTIFACT_FILES; do
-                FILENAME=$(basename "$FILE")
-                  echo "Uploading: $FILENAME"
+          # 3. Loop Pengiriman Langsung
+          for FILE in $ARTIFACT_FILES; do
+            FILENAME=$(basename "$FILE")
+            echo "📤 Mengirim ke Private Chat: $FILENAME"
 
-              # Gabungkan caption utama dengan info file
-              # Gunakan --form-string agar baris baru diproses dengan benar oleh Telegram
             curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendDocument" \
-            -F chat_id="${CHAT_ID}" \
-            -F message_thread_id="${MESSAGE_THREAD_ID}" \
-            -F document=@"${FILE}" \
-            -F parse_mode="HTML" \
-            --form-string "caption=${CAPTION}
-            📦 <b>File:</b> <code>${FILENAME}</code>"
+              -F chat_id="${CHAT_ID}" \
+              -F document=@"${FILE}" \
+              -F parse_mode="HTML" \
+              --form-string "caption=${CAPTION}
+          📦 <b>File:</b> <code>${FILENAME}</code>"
           
-            echo "✅ Terkirim: ${FILENAME}"
-            sleep 2
-          done
+          echo "✅ Berhasil dikirim."
+          sleep 2
+        done
           
       # ==================== 上传补丁冲突文件 ====================
       - name: 上传补丁冲突文件
