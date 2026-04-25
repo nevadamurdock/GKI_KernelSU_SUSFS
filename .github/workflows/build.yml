@@ -1198,11 +1198,11 @@ jobs:
               -F document=@"${FILE}" \
               -F parse_mode="HTML" \
               --form-string "caption=${CAPTION}
-          📦 <b>File:</b> <code>${FILENAME}</code>"
+            📦 <b>File:</b> <code>${FILENAME}</code>"
           
-          echo "✅ Berhasil dikirim."
-          sleep 2
-        done
+              echo "✅ Berhasil dikirim."
+            sleep 2
+          done
           
       # ==================== 上传补丁冲突文件 ====================
       - name: 上传补丁冲突文件
