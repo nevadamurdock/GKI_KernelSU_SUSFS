@@ -246,7 +246,7 @@ jobs:
   # 当 release_type 不是 Actions 时，创建 GitHub Release
   # 仅限原仓库运行，fork 仓库跳过此步骤
   release:
-    if: ${{ always() && !cancelled() && inputs.release_type != 'Actions' && github.repository == 'coolzyd9107/GKI_KernelSU_SUSFS' }}
+    if: ${{ always() && !cancelled() && inputs.release_type != 'Actions' && github.repository == 'ReSukiSU-GKI/GKI_KernelSU_SUSFS' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -561,6 +561,7 @@ jobs:
           BBG = ${{ inputs.use_bbg && 'true' || 'false' }}
           LZ4KD = ${{ inputs.use_zram && 'true' || 'false' }}
           Built-in KPM = ${{ inputs.use_kpm && 'true' || 'false' }}
+          Re-Kernel = ${{ inputs.use_rekernel && 'true' || 'false' }}
           KPatch-Next Support = true</pre>
           Change Log: 
           <pre>${INPUT_CHANGE_LOG}
@@ -601,6 +602,7 @@ jobs:
           BBG = ${{ inputs.use_bbg && 'true' || 'false' }}
           LZ4KD = ${{ inputs.use_zram && 'true' || 'false' }}
           Built-in KPM = ${{ inputs.use_kpm && 'true' || 'false' }}
+          Re-Kernel = ${{ inputs.use_rekernel && 'true' || 'false' }}
           KPatch-Next Support = true</pre>
           Change Log: 
           <pre>${INPUT_CHANGE_LOG}
@@ -642,6 +644,7 @@ jobs:
           BBG = ${{ inputs.use_bbg && 'true' || 'false' }}
           LZ4KD = ${{ inputs.use_zram && 'true' || 'false' }}
           Built-in KPM = ${{ inputs.use_kpm && 'true' || 'false' }}
+          Re-Kernel = ${{ inputs.use_rekernel && 'true' || 'false' }}
           KPatch-Next Support = true</pre>
           Change Log: 
           <pre>${INPUT_CHANGE_LOG}
