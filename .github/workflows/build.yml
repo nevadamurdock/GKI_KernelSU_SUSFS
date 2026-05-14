@@ -858,70 +858,7 @@ jobs:
           CONFIG_KSU_SUSFS_SUS_MAP=y
           EOF
 
-      # ==================== 配置内核名称 ====================
-      - name: 配置内核名称
-        working-directory: ${{ env.KERNEL_ROOT }}
-        run: |
-          # --- TAMBAHAN: Set Custom Local Version ---
-          # Ini akan mengubah CONFIG_LOCALVERSION di file defconfig secara paksa
-          find ./common/arch/arm64/configs/ -name "gki_defconfig" -exec sed -i 's/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION="-GusKernel"/' {} +
-          # Mematikan auto version agar tidak berantakan
-          find ./common/arch/arm64/configs/ -name "gki_defconfig" -exec sed -i 's/^CONFIG_LOCALVERSION_AUTO=.*/CONFIG_LOCALVERSION_AUTO=n/' {} +
-          # ------------------------------------------
-
-          if [ -f "build/build.sh" ]; then
-            sed -i 's/-dirty//' ./common/scripts/setlocalversion
-          else
-            # 配置 6.1+ 内核
-            sed -i '/^[[:space:]]*"protected_exports_list"[[:space:]]*:[[:space:]]*"android\/abi_gki_protected_exports_aarch64",$/d' ./common/BUILD.bazel
-            sed -i '/kmi_symbol_list_strict_mode/d' ./common/BUILD.bazel
-            rm -rf ./common/android/abi_gki_protected_exports_*
-            sed -i "/stable_scmversion_cmd/s/-maybe-dirty//g" ./build/kernel/kleaf/impl/stamp.bzl
-          fi
-
-          # 配置内核名称 (Sisanya tetap sama agar tidak merusak logika KMI_TAG)
-          if [ -n "${{ inputs.version }}" ]; then
-            CLEAN_VERSION=$(echo "${{ inputs.version }}" | sed -E 's/^[0-9]+\.[0-9]+\.[0-9]+//')
-            
-            case "${{ inputs.android_version }}-${{ inputs.kernel_version }}" in
-              "android14-6.1")  KMI_TAG="android14-11" ;;
-              "android15-6.6")  KMI_TAG="android15-8" ;;
-              "android16-6.12") KMI_TAG="android16-5" ;;
-              *) KMI_TAG="${{ inputs.android_version }}" ;;
-            esac
-            
-            if [ "${{ inputs.kernel_version }}" = "6.1" ]; then
-              KMI_LOCAL="-GusKernel-${KMI_TAG}${CLEAN_VERSION}"
-              sed -i "\$s|echo \"\$res\"|echo \"${KMI_LOCAL}\"|" ./common/scripts/setlocalversion 2>/dev/null || true
-              sed -i "/^CONFIG_LOCALVERSION=/ s/=\"[^\"]*\"/=\"${KMI_LOCAL}\"/" ./common/arch/arm64/configs/gki_defconfig 2>/dev/null || true
-            elif [ "${{ inputs.kernel_version }}" = "5.10" ] || [ "${{ inputs.kernel_version }}" = "5.15" ]; then
-              sed -i "\$s|echo \"\$res\"|echo \"-GusKernel${CLEAN_VERSION}\"|" ./common/scripts/setlocalversion 2>/dev/null || true
-              sed -i '/^CONFIG_LOCALVERSION=/ s/="\([^"]*\)"/="-GusKernel"/' ./common/arch/arm64/configs/gki_defconfig
-            else
-              SUFFIX="-GusKernel-${KMI_TAG}${CLEAN_VERSION}"
-              perl -i -0777 -pe 's/(.*)echo "\$\{KERNELVERSION\}\$\{file_localversion\}\$\{config_localversion\}\$\{LOCALVERSION\}\$\{scm_version\}"/$1echo "\$\{KERNELVERSION\}'"${SUFFIX}"'"/s' ./common/scripts/setlocalversion 2>/dev/null || true
-            fi
-          elif [ ! -f "build/build.sh" ]; then
-            cd ./common
-            BID="ab$((RANDOM % 90000000 + 10000000))"
-            GHASH=$(git rev-parse --verify HEAD | cut -c1-13)
-            
-            case "${{ inputs.android_version }}-${{ inputs.kernel_version }}" in
-              "android14-6.1")  KMI_TAG="android14-11" ;;
-              "android15-6.6")  KMI_TAG="android15-8" ;;
-              "android16-6.12") KMI_TAG="android16-5" ;;
-              *) KMI_TAG="${{ inputs.android_version }}" ;;
-            esac
-
-            if [ "${{ inputs.kernel_version }}" = "6.1" ]; then
-              KMI_LOCAL="-GusKernel-${KMI_TAG}-g${GHASH}-${BID}-4k"
-              sed -i "\$s|echo \"\$res\"|echo \"${KMI_LOCAL}\"|" ./scripts/setlocalversion 2>/dev/null || true
-              sed -i "/^CONFIG_LOCALVERSION=/ s/=\"[^\"]*\"/=\"${KMI_LOCAL}\"/" ./arch/arm64/configs/gki_defconfig 2>/dev/null || true
-            else
-              SUFFIX="-GusKernel-${KMI_TAG}-g${GHASH}-${BID}"
-              perl -i -0777 -pe 's/(.*)echo "\$\{KERNELVERSION\}\$\{file_localversion\}\$\{config_localversion\}\$\{LOCALVERSION\}\$\{scm_version\}"/$1echo "\$\{KERNELVERSION\}'"${SUFFIX}"'\$\{config_localversion\}"/s' ./scripts/setlocalversion 2>/dev/null || true
-            fi
-          fi
+      
 
       # ==================== 自定义构建时间 ====================
       - name: 设置自定义构建时间
@@ -937,7 +874,53 @@ jobs:
 
           # 导出给后续编译流程
           echo "使用构建时间: $DATESTR"
-          echo "KBUILD_BUILD_TIMESTAMP=$DATESTR" >> "$GITHUB_ENV"
+          echo "KBUILD_BUILD_TIM# ==================== 配置内核名称 ====================
+      - name: 配置内核名称
+        working-directory: ${{ env.KERNEL_ROOT }}
+        run: |
+          # --- Set Custom Local Version ---
+          # Mengatur dasar nama kernel di defconfig
+          find ./common/arch/arm64/configs/ -name "gki_defconfig" -exec sed -i 's/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION="-Gus"/' {} +
+          find ./common/arch/arm64/configs/ -name "gki_defconfig" -exec sed -i 's/^CONFIG_LOCALVERSION_AUTO=.*/CONFIG_LOCALVERSION_AUTO=n/' {} +
+
+          if [ -f "build/build.sh" ]; then
+            sed -i 's/-dirty//' ./common/scripts/setlocalversion
+          else
+            # 配置 6.1+ 内核 (Bazel/Kleaf)
+            sed -i '/^[[:space:]]*"protected_exports_list"[[:space:]]*:[[:space:]]*"android\/abi_gki_protected_exports_aarch64",$/d' ./common/BUILD.bazel
+            sed -i '/kmi_symbol_list_strict_mode/d' ./common/BUILD.bazel
+            rm -rf ./common/android/abi_gki_protected_exports_*
+            sed -i "/stable_scmversion_cmd/s/-maybe-dirty//g" ./build/kernel/kleaf/impl/stamp.bzl
+          fi
+
+          if [ -n "${{ inputs.version }}" ]; then
+            # Jika versi ditentukan manual
+            CLEAN_VERSION=$(echo "${{ inputs.version }}" | sed -E 's/^[0-9]+\.[0-9]+\.[0-9]+//')
+            SUFFIX="-Gus-${{ inputs.android_version }}${CLEAN_VERSION}"
+            
+            # Terapkan ke setlocalversion tanpa memanggil config_localversion lagi untuk hindari duplikasi
+            perl -i -0777 -pe 's/(.*)echo "\$\{KERNELVERSION\}\$\{file_localversion\}\$\{config_localversion\}\$\{LOCALVERSION\}\$\{scm_version\}"/$1echo "\$\{KERNELVERSION\}'"${SUFFIX}"'"/s' ./common/scripts/setlocalversion 2>/dev/null || true
+          
+          elif [ ! -f "build/build.sh" ]; then
+            # Untuk GKI Kernel (6.1, 6.6, 6.12) menggunakan Bazel
+            cd ./common
+            BID="ab$((RANDOM % 9000 + 1000))" # BID diperpendek ke 4 digit
+            GHASH=$(git rev-parse --short=7 HEAD) # Hash diperpendek ke 7 karakter
+            
+            # Singkatkan tag Android untuk menghemat ruang
+            case "${{ inputs.android_version }}" in
+              "android14") K_TAG="a14" ;;
+              "android15") K_TAG="a15" ;;
+              "android16") K_TAG="a16" ;;
+              *) K_TAG="gki" ;;
+            esac
+
+            # SUFFIX Ramping: -Gus-a15-g1234567-ab1234
+            SUFFIX="-Gus-${K_TAG}-g${GHASH}-${BID}"
+            
+            # FIX UTAMA: Menghapus ${config_localversion} dari output echo agar tidak double
+            perl -i -0777 -pe 's/(.*)echo "\$\{KERNELVERSION\}\$\{file_localversion\}\$\{config_localversion\}\$\{LOCALVERSION\}\$\{scm_version\}"/$1echo "\$\{KERNELVERSION\}'"${SUFFIX}"'"/s' ./scripts/setlocalversion 2>/dev/null || true
+          fiESTAMP=$DATESTR" >> "$GITHUB_ENV"
           echo "KBUILD_BUILD_VERSION=1" >> "$GITHUB_ENV"
 
           # 统一处理 mkcompile_h 补丁
