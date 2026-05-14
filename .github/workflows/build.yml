@@ -874,8 +874,9 @@ jobs:
 
           # 导出给后续编译流程
           echo "使用构建时间: $DATESTR"
-          echo "KBUILD_BUILD_TIM# ==================== 配置内核名称 ====================
-
+          
+          # Simpan ke GitHub Env agar bisa digunakan oleh compiler kernel
+          echo "KBUILD_BUILD_TIMESTAMP=$DATESTR" >> $GITHUB_ENV
           
       # ==================== 配置内核名称 ====================
       - name: 配置内核名称
