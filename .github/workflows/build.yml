@@ -1146,14 +1146,6 @@ jobs:
             echo "Peringatan: gki_defconfig tidak ditemukan!"
           fi
 
-      # ==================== 开始编译内核 ====================
-      - name: 构建内核 (Kompilasi Kernel)
-        working-directory: ${{ env.KERNEL_ROOT }}
-        run: |
-          # Menambahkan flag --nokleaf_localversion secara sempurna 
-          # agar Bazel menghormati CONFIG_LOCALVERSION yang telah kita suntikkan di atas
-          tools/bazel build --nokleaf_localversion //common:kernel_aarch64
-          
       # ==================== 编译内核 ====================
       # 使用重试机制编译内核，超时后自动重试
       - name: 构建——如出错为该KSU暂时未同步SUSFS代码或编译时错误(等待该KSU仓库修复)
@@ -1201,7 +1193,10 @@ jobs:
               if [ "${{ inputs.kernel_version }}" = "6.12" ]; then
                 LTO_FLAG="--lto=none"
               fi
-              tools/bazel build --disk_cache=/home/runner/.cache/bazel --config=fast $LTO_FLAG $FRAG_FLAG //common:kernel_aarch64_dist || exit 1
+              
+              # 【DI SINI KITA TAMBAHKAN FLAG NYA】
+              # Menambahkan --nokleaf_localversion agar Bazel mematuhi CONFIG_LOCALVERSION="-GusKernel" yang kita buat
+              tools/bazel build --disk_cache=/home/runner/.cache/bazel --config=fast --nokleaf_localversion $LTO_FLAG $FRAG_FLAG //common:kernel_aarch64_dist || exit 1
               strings ./bazel-bin/common/kernel_aarch64/Image | grep 'Linux version'
             fi
 
