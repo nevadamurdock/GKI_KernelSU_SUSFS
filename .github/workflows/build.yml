@@ -1110,39 +1110,50 @@ jobs:
           echo "KBUILD_BUILD_TIMESTAMP=$DATESTR" >> $GITHUB_ENV
           
       # ==================== 配置内核名称 ====================
-      - name: 配置内核名称
+      - name: 配置内核名称 (GusKernel)
         working-directory: ${{ env.KERNEL_ROOT }}
         run: |
-          # 1. Set CONFIG_LOCALVERSION_AUTO ke 'n' di gki_defconfig
-          find ./common/arch/arm64/configs/ -name "gki_defconfig" -exec sed -i 's/^CONFIG_LOCALVERSION_AUTO=.*/CONFIG_LOCALVERSION_AUTO=n/' {} +
-          
-          # 2. Set CONFIG_LOCALVERSION menjadi "-GusKernel"
-          find ./common/arch/arm64/configs/ -name "gki_defconfig" -exec sed -i 's/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION="-GusKernel"/' {} +
-
-          if [ -f "build/build.sh" ]; then
-            # Untuk kernel lama (5.10/5.15)
-            sed -i 's/-dirty//' ./common/scripts/setlocalversion
-          else
-            # Untuk kernel 6.1+ (Bazel/Kleaf)
-            # Menghapus proteksi ABI agar tidak error saat ganti nama
+          # 1. Bersihkan batasan strict mode untuk Kernel 6.1+ (Bazel/Kleaf)
+          if [ -f "common/BUILD.bazel" ]; then
             sed -i '/^[[:space:]]*"protected_exports_list"[[:space:]]*:[[:space:]]*"android\/abi_gki_protected_exports_aarch64",$/d' ./common/BUILD.bazel
             sed -i '/kmi_symbol_list_strict_mode/d' ./common/BUILD.bazel
             rm -rf ./common/android/abi_gki_protected_exports_*
-            sed -i "/stable_scmversion_cmd/s/-maybe-dirty//g" ./build/kernel/kleaf/impl/stamp.bzl
+            sed -i "/stable_scmversion_cmd/s/-maybe-dirty//g" ./build/kernel/kleaf/impl/stamp.bzl 2>/dev/null || true
           fi
 
-          # 3. Paksa script setlocalversion hanya mengeluarkan KERNELVERSION + CONFIG_LOCALVERSION
-          # Ini akan mengabaikan Git hash, Build ID, dan tag Android lainnya.
+          # 2. Hapus akhiran -dirty bawaan skrip setlocalversion lama jika ada
           if [ -f "./common/scripts/setlocalversion" ]; then
-            TARGET_FILE="./common/scripts/setlocalversion"
-          else
-            TARGET_FILE="./scripts/setlocalversion"
+            sed -i 's/-dirty//' ./common/scripts/setlocalversion
+          elif [ -f "./scripts/setlocalversion" ]; then
+            sed -i 's/-dirty//' ./scripts/setlocalversion
           fi
 
-          # Script ini akan memaksa output hanya: {VersiKernel}{CONFIG_LOCALVERSION}
-          # Contoh hasil: 6.6.118-GusKernel
-          perl -i -0777 -pe 's/(.*)echo "\$\{KERNELVERSION\}\$\{file_localversion\}\$\{config_localversion\}\$\{LOCALVERSION\}\$\{scm_version\}"/$1echo "\$\{KERNELVERSION\}\$\{config_localversion\}"/s' $TARGET_FILE 2>/dev/null || true
+          # 3. Suntikkan konfigurasi GusKernel ke gki_defconfig
+          DEFCONFIG_PATH=""
+          if [ -f "./common/arch/arm64/configs/gki_defconfig" ]; then
+            DEFCONFIG_PATH="./common/arch/arm64/configs/gki_defconfig"
+          elif [ -f "./arch/arm64/configs/gki_defconfig" ]; then
+            DEFCONFIG_PATH="./arch/arm64/configs/gki_defconfig"
+          fi
 
+          if [ -n "$DEFCONFIG_PATH" ]; then
+            echo "Mengonfigurasi localversion di $DEFCONFIG_PATH..."
+            sed -i '/^CONFIG_LOCALVERSION=/d' $DEFCONFIG_PATH
+            sed -i '/^CONFIG_LOCALVERSION_AUTO=/d' $DEFCONFIG_PATH
+            echo 'CONFIG_LOCALVERSION="-GusKernel"' >> $DEFCONFIG_PATH
+            echo 'CONFIG_LOCALVERSION_AUTO=n' >> $DEFCONFIG_PATH
+          else
+            echo "Peringatan: gki_defconfig tidak ditemukan!"
+          fi
+
+      # ==================== 开始编译内核 ====================
+      - name: 构建内核 (Kompilasi Kernel)
+        working-directory: ${{ env.KERNEL_ROOT }}
+        run: |
+          # Menambahkan flag --nokleaf_localversion secara sempurna 
+          # agar Bazel menghormati CONFIG_LOCALVERSION yang telah kita suntikkan di atas
+          tools/bazel build --nokleaf_localversion //common:kernel_aarch64
+          
       # ==================== 编译内核 ====================
       # 使用重试机制编译内核，超时后自动重试
       - name: 构建——如出错为该KSU暂时未同步SUSFS代码或编译时错误(等待该KSU仓库修复)
