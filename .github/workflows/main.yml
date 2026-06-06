@@ -55,6 +55,19 @@ on:
         type: string
         default: "Sun Dec 01 08:10:00 UTC 2024"
         required: false
+      droidspaces:
+        description: "Droidspaces 容器支持 (5.10~6.6: 槽位补丁, 6.12: 开/关)"
+        type: choice
+        options:
+          - "off"
+          - "678"
+          - "123"
+          - "345"
+        default: "off"
+      droidspaces_ntsync:
+        description: "启用 Droidspaces 容器 NTSync 支持（需启用 Droidspaces）"
+        type: boolean
+        default: false
 
       # ==================== 功能开关 ====================
       use_zram:
@@ -73,15 +86,6 @@ on:
         description: "禁用 SUSFS"
         type: boolean
         default: false
-      droidspaces:
-        description: "Droidspaces 容器支持 (5.10~6.6: 槽位补丁, 6.12: 开/关)"
-        type: choice
-        options:
-          - "off"
-          - "678"
-          - "123"
-          - "345"
-        default: "off"
 
       # ==================== 构建版本选择 ====================
       build_a12_5_10:
@@ -142,6 +146,7 @@ jobs:
       use_rekernel: ${{ inputs.use_rekernel }}
       cancel_susfs: ${{ inputs.cancel_susfs }}
       droidspaces: ${{ inputs.droidspaces }}
+      droidspaces_ntsync: ${{ inputs.droidspaces_ntsync }}
       called_from_main: true
 
   # ==================== Android 13 - 5.15 构建 ====================
@@ -158,6 +163,7 @@ jobs:
       use_rekernel: ${{ inputs.use_rekernel }}
       cancel_susfs: ${{ inputs.cancel_susfs }}
       droidspaces: ${{ inputs.droidspaces }}
+      droidspaces_ntsync: ${{ inputs.droidspaces_ntsync }}
       called_from_main: true
 
   # ==================== Android 14 - 6.1 构建 ====================
@@ -174,6 +180,7 @@ jobs:
       use_rekernel: ${{ inputs.use_rekernel }}
       cancel_susfs: ${{ inputs.cancel_susfs }}
       droidspaces: ${{ inputs.droidspaces }}
+      droidspaces_ntsync: ${{ inputs.droidspaces_ntsync }}
       called_from_main: true
 
   # ==================== Android 15 - 6.6 构建 ====================
@@ -190,6 +197,7 @@ jobs:
       use_rekernel: ${{ inputs.use_rekernel }}
       cancel_susfs: ${{ inputs.cancel_susfs }}
       droidspaces: ${{ inputs.droidspaces }}
+      droidspaces_ntsync: ${{ inputs.droidspaces_ntsync }}
       called_from_main: true
 
   # ==================== Android 16 - 6.12 构建 ====================
@@ -206,6 +214,7 @@ jobs:
       use_rekernel: ${{ inputs.use_rekernel }}
       cancel_susfs: ${{ inputs.cancel_susfs }}
       droidspaces: ${{ inputs.droidspaces }}
+      droidspaces_ntsync: ${{ inputs.droidspaces_ntsync }}
       called_from_main: true
 
   # ==================== 收集补丁冲突文件 ====================
@@ -534,6 +543,10 @@ jobs:
             gh release upload "$NEW_TAG" "$file"
           done
 
+      - name: 将发布由draft转换为publish状态
+        run: |
+          gh release edit --draft=false "$NEW_TAG"
+
       - name: 构建摘要
         run: |
           echo "## 发布已创建" >> $GITHUB_STEP_SUMMARY
@@ -564,6 +577,7 @@ jobs:
           BBG = ${{ inputs.use_bbg && 'true' || 'false' }}
           LZ4KD = ${{ inputs.use_zram && 'true' || 'false' }}
           Re-Kernel = ${{ inputs.use_rekernel && 'true' || 'false' }}
+          Droidspaces = ${{ inputs.droidspaces }}${{ inputs.droidspaces_ntsync && ' + NTSync' || '' }}
           KPatch-Next Support = true</pre>
           Change Log: 
           <pre>${INPUT_CHANGE_LOG}
@@ -604,6 +618,7 @@ jobs:
           BBG = ${{ inputs.use_bbg && 'true' || 'false' }}
           LZ4KD = ${{ inputs.use_zram && 'true' || 'false' }}
           Re-Kernel = ${{ inputs.use_rekernel && 'true' || 'false' }}
+          Droidspaces = ${{ inputs.droidspaces }}${{ inputs.droidspaces_ntsync && ' + NTSync' || '' }}
           KPatch-Next Support = true</pre>
           Change Log: 
           <pre>${INPUT_CHANGE_LOG}
@@ -645,6 +660,7 @@ jobs:
           BBG = ${{ inputs.use_bbg && 'true' || 'false' }}
           LZ4KD = ${{ inputs.use_zram && 'true' || 'false' }}
           Re-Kernel = ${{ inputs.use_rekernel && 'true' || 'false' }}
+          Droidspaces = ${{ inputs.droidspaces }}${{ inputs.droidspaces_ntsync && ' + NTSync' || '' }}
           KPatch-Next Support = true</pre>
           Change Log: 
           <pre>${INPUT_CHANGE_LOG}

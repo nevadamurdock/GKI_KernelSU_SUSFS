@@ -13,7 +13,7 @@
 ---
 
 # 重要公告
-### 2026高考在即，仓库作者需要备考+参考，因此近期维护暂停直至高考结束，如果你有能力可以发起pr帮助我们进行修复，见谅！同时祝其他本届考生高考顺利！
+### 2026高考已至，仓库作者需要参加考试，因此此仓库将归档至高考结束，见谅！同时祝其他本届考生高考顺利！
 
 </div>
 
@@ -21,7 +21,7 @@
 
 ① 本仓库分叉自 [zzh20188/GKI_KernelSU_SUSFS](https://github.com/zzh20188/GKI_KernelSU_SUSFS/) 本人只进行了部分修改与问题修复，请各位使用者优先考虑分叉原始仓库。
 
-② 本仓库只提供ReSukiSU的预构建内核，对于其它KernelSU分支，请分叉本仓库或 [zzh20188/GKI_KernelSU_SUSFS](https://github.com/zzh20188/GKI_KernelSU_SUSFS/) 然后自行构建。
+② 本仓库仅支持构建包含ReSukiSU的内核，对其它KernelSU分支的内核构建支持现已彻底移除，如需构建包含其他KernelSU分支的内核，请分叉上游仓库 [zzh20188/GKI_KernelSU_SUSFS](https://github.com/zzh20188/GKI_KernelSU_SUSFS/) 然后自行构建。
 
 ## 💰 特别鸣谢
 
@@ -29,7 +29,7 @@
 
 [zzh20188](https://github.com/zzh20188)：他是本仓库的上游仓库作者。
 
-[zhuzhuzihan](https://github.com/zhuzhuzihan)：协助进行了大量修复和修改，同时为我们的Telegram Bot提供服务器(仓库所有者真的太穷了，租不起)，我们的Telegram Bot的主要开发者。
+[*zhuzhuzihan*](https://github.com/zhuzhuzihan)：协助进行了大量修复和修改，同时为我们的Telegram Bot提供服务器(仓库所有者真的太穷了，租不起)，我们的Telegram Bot的主要开发者。
 
 [TanakaLun](https://github.com/TanakaLun)：协助进行了大量修复和修改。
 
@@ -39,15 +39,7 @@
 
 [cctv18](https://github.com/cctv18): 协助修复构建工作流程存在的问题，为添加6.12内核构建支持提供部分思路，为修复一些SUSFS导致的问题提供思路。
 
-## 🚀 快速导航
-
-<table>
-<tr>
-<td align="center" width="33%">📖 <b><a href="https://github.com/zzh20188/GKI_KernelSU_SUSFS/wiki">文档</a></b></td>
-<td align="center" width="34%">📥 <b><a href="https://github.com/ReSukiSU-GKI/GKI_KernelSU_SUSFS/releases">下载</a></b></td>
-<td align="center" width="33%">🔰 <b><a href="https://zzh20188.github.io/GKI_KernelSU_SUSFS/guide.html">新手教程</a></b></td>
-</tr>
-</table>
+注:带*号的username表示该协作者的github账户处于不可见状态
 
 ---
 
@@ -114,5 +106,7 @@
 **更多内容持续更新中...**
 
 ⭐ 如果这个项目对你有帮助，请点个 Star 支持一下！
+
+⭐ 新预构建发布通知/重大变更通知请关注我们的[Telegram频道](https://t.me/ReSukiSUKernelBuilds)
 
 </div>
