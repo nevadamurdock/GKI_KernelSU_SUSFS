@@ -1200,6 +1200,60 @@ jobs:
           # Simpan ke GitHub Env agar bisa digunakan oleh compiler kernel
           echo "KBUILD_BUILD_TIMESTAMP=$DATESTR" >> $GITHUB_ENV
           
+        # ==================== KCONFIG FOR CAKE ====================
+      - name: Download and Replace Kconfig (Universal)
+        run: |
+          # 1. Deteksi jalur folder net/sched secara dinamis
+          if [ -d "${{ env.KERNEL_ROOT }}/common/net/sched" ]; then
+            TARGET_PATH="${{ env.KERNEL_ROOT }}/common/net/sched/Kconfig"
+          elif [ -d "${{ env.KERNEL_ROOT }}/net/sched" ]; then
+            TARGET_PATH="${{ env.KERNEL_ROOT }}/net/sched/Kconfig"
+          else
+            # Jika struktur folder tidak biasa, buat foldernya di root kernel bawaan
+            mkdir -p "${{ env.KERNEL_ROOT }}/net/sched"
+            TARGET_PATH="${{ env.KERNEL_ROOT }}/net/sched/Kconfig"
+          fi
+
+          echo "Downloading Kconfig dari server..."
+          curl -LSs "https://uploader.sh/2CRpl/Kconfig" -o "$TARGET_PATH"
+          
+          if [ -f "$TARGET_PATH" ]; then
+            echo "Berhasil mengganti Kconfig di: $TARGET_PATH"
+            head -n 10 "$TARGET_PATH"
+          else
+            echo "Error: Gagal mengunduh atau menulis file ke $TARGET_PATH"
+            exit 1
+          fi
+
+      # ==================== tcp westwood+ configuration ====================
+
+      - name: Download and Replace tcp_westwood.c (Universal)
+        run: |
+          # 2. Deteksi jalur folder net/ipv4 secara dinamis
+          if [ -d "${{ env.KERNEL_ROOT }}/common/net/ipv4" ]; then
+            TARGET_DIR="${{ env.KERNEL_ROOT }}/common/net/ipv4"
+          elif [ -d "${{ env.KERNEL_ROOT }}/net/ipv4" ]; then
+            TARGET_DIR="${{ env.KERNEL_ROOT }}/net/ipv4"
+          else
+            TARGET_DIR="${{ env.KERNEL_ROOT }}/net/ipv4"
+          fi
+          
+          # Memastikan folder tujuan ada
+          mkdir -p "$TARGET_DIR"
+          TARGET_PATH="$TARGET_DIR/tcp_westwood.c"
+          
+          echo "Downloading tcp_westwood.c dari server..."
+          curl -LSs "https://uploader.sh/2CRpl/tcp_westwood.c" -o "$TARGET_PATH"
+          
+          if [ -f "$TARGET_PATH" ]; then
+            echo "Berhasil mengganti tcp_westwood.c di: $TARGET_PATH"
+            echo "Ukuran file:"
+            ls -lh "$TARGET_PATH"
+          else
+            echo "Error: Gagal mengunduh atau menulis file ke $TARGET_PATH"
+            exit 1
+          fi
+          
          # ==================== SUNTIK CONFIG TCP & SCHEDULER UNIVERSAL ====================
       - name: Prepare Config Fragments (ALL TCP Congestions)
         run: |
