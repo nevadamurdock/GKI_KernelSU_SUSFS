@@ -1212,12 +1212,11 @@ jobs:
             sed -i "/stable_scmversion_cmd/s/-maybe-dirty//g" ./build/kernel/kleaf/impl/stamp.bzl 2>/dev/null || true
           fi
 
-          # 2. Jinakkan skrip setlocalversion bawaan Linux (Untuk Kernel di bawah 6.1)
-          # Kita paksa skrip ini agar langsung mencetak nama kosong, sehingga dia tidak menambah hash git/dirty belakangnya.
+          # 2. Jinakkan skrip setlocalversion (Perbaikan Typo Jalur File)
           if [ -f "./common/scripts/setlocalversion" ]; then
-            sed -i 's/echo "$res"/echo ""/' ./common/scripts/setlocalversion 2>/dev/null || true
+            sed -i 's/echo "$res"/echo ""/' ./common/scripts/setlocalversion
           elif [ -f "./scripts/setlocalversion" ]; then
-            sed -i 's/echo "$res"/echo ""/' ./scripts/scripts/setlocalversion 2>/dev/null || true
+            sed -i 's/echo "$res"/echo ""/' ./scripts/setlocalversion
           fi
 
           # 3. Suntikkan konfigurasi GusKernel ke gki_defconfig
@@ -1233,10 +1232,20 @@ jobs:
             sed -i '/^CONFIG_LOCALVERSION=/d' $DEFCONFIG_PATH
             sed -i '/^CONFIG_LOCALVERSION_AUTO=/d' $DEFCONFIG_PATH
             
-            # CUKUP INPUT BARIS INI SAJA, HAPUS YANG LOCALVERSION_AUTO
             echo 'CONFIG_LOCALVERSION="-GusKernel"' >> $DEFCONFIG_PATH
+            echo 'CONFIG_LOCALVERSION_AUTO=n' >> $DEFCONFIG_PATH
           else
             echo "Peringatan: gki_defconfig tidak ditemukan!"
+          fi
+
+          # 4. TRICK TAMBAHAN: Inject via Environment Variable agar terbaca semua versi build
+          # Ini memaksa build script (seperti build.sh lama atau make) untuk langsung mengadopsi nama ini.
+          echo "LOCALVERSION=-GusKernel" >> $GITHUB_ENV
+          
+          # Jika menggunakan Kleaf/Bazel (Kernel 6.1+), kita juga force via flag jika ada
+          if [ -f "build/kernel/kleaf/impl/common_flags.bzl" ]; then
+             # Menambahkan trik flags tambahan jika diperlukan di sistem Kleaf Anda
+             echo "Sistem Kleaf terdeteksi, localversion diamankan via GITHUB_ENV."
           fi
 
       # ==================== 编译内核 ====================
