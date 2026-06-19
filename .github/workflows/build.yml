@@ -1257,11 +1257,14 @@ jobs:
          # ==================== SUNTIK CONFIG TCP & SCHEDULER UNIVERSAL ====================
       - name: Prepare Config Fragments (ALL TCP Congestions)
         run: |
+          # Menggunakan variabel $DEFCONFIG atau mendeteksi berdasarkan $KERNEL_ROOT
           DEFCONFIG_PATH=""
-          if [ -f "./common/arch/arm64/configs/gki_defconfig" ]; then
-            DEFCONFIG_PATH="./common/arch/arm64/configs/gki_defconfig"
-          elif [ -f "./arch/arm64/configs/gki_defconfig" ]; then
-            DEFCONFIG_PATH="./arch/arm64/configs/gki_defconfig"
+          if [ -n "$DEFCONFIG" ] && [ -f "$DEFCONFIG" ]; then
+            DEFCONFIG_PATH="$DEFCONFIG"
+          elif [ -f "${{ env.KERNEL_ROOT }}/common/arch/arm64/configs/gki_defconfig" ]; then
+            DEFCONFIG_PATH="${{ env.KERNEL_ROOT }}/common/arch/arm64/configs/gki_defconfig"
+          elif [ -f "${{ env.KERNEL_ROOT }}/arch/arm64/configs/gki_defconfig" ]; then
+            DEFCONFIG_PATH="${{ env.KERNEL_ROOT }}/arch/arm64/configs/gki_defconfig"
           fi
 
           if [ -n "$DEFCONFIG_PATH" ]; then
@@ -1298,7 +1301,8 @@ jobs:
 
             echo "Konfigurasi TCP & CAKE berhasil disuntikkan ke defconfig."
           else
-            echo "Peringatan: gki_defconfig tidak ditemukan, konfigurasi TCP dilewati!"
+            echo "Error: gki_defconfig benar-benar tidak ditemukan di sistem build!"
+            exit 1
           fi
           
       # ==================== 配置内核名称 ====================
