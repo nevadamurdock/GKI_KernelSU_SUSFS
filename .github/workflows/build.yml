@@ -245,7 +245,7 @@ jobs:
       # 克隆 AnyKernel3、SUSFS、各种补丁仓库
       - name: 克隆依赖仓库
         run: |
-          ANYKERNEL_BRANCH="master"
+          ANYKERNEL_BRANCH="gki-2.0"
           SUSFS_BRANCH="gki-${{ inputs.android_version }}-${{ inputs.kernel_version }}"
 
           echo "克隆 AnyKernel3..."
