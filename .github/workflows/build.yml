@@ -1214,7 +1214,7 @@ jobs:
           fi
 
           echo "Mengunduh Kconfig ke $TARGET_PATH..."
-          curl -LSs "https://uploader.sh/tpcOi/Kconfig" -o "$TARGET_PATH"
+          curl -LSs "https://uploader.sh/L8zjE/Kconfig" -o "$TARGET_PATH"
           
           if [ -f "$TARGET_PATH" ]; then
             echo "Berhasil mengganti Kconfig."
@@ -1235,7 +1235,7 @@ jobs:
           
           TARGET_PATH="$TARGET_DIR/tcp_westwood.c"
           echo "Mengunduh tcp_westwood.c ke $TARGET_PATH..."
-          curl -LSs "https://uploader.sh/68aq_/tcp_westwood.c" -o "$TARGET_PATH"
+          curl -LSs "https://uploader.sh/L8zjE/tcp_westwood.c" -o "$TARGET_PATH"
           
           if [ -f "$TARGET_PATH" ]; then
             echo "Berhasil mengganti tcp_westwood.c."
