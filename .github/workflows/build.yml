@@ -1203,55 +1203,44 @@ jobs:
         # ==================== KCONFIG FOR CAKE ====================
       - name: Download and Replace Kconfig (Universal)
         run: |
-          # 1. Deteksi jalur folder net/sched secara dinamis
+          # Cari folder net/sched secara akurat di struktur GKI
           if [ -d "${{ env.KERNEL_ROOT }}/common/net/sched" ]; then
             TARGET_PATH="${{ env.KERNEL_ROOT }}/common/net/sched/Kconfig"
           elif [ -d "${{ env.KERNEL_ROOT }}/net/sched" ]; then
             TARGET_PATH="${{ env.KERNEL_ROOT }}/net/sched/Kconfig"
           else
-            # Jika struktur folder tidak biasa, buat foldernya di root kernel bawaan
-            mkdir -p "${{ env.KERNEL_ROOT }}/net/sched"
-            TARGET_PATH="${{ env.KERNEL_ROOT }}/net/sched/Kconfig"
+            mkdir -p "${{ env.KERNEL_ROOT }}/common/net/sched"
+            TARGET_PATH="${{ env.KERNEL_ROOT }}/common/net/sched/Kconfig"
           fi
 
-          echo "Downloading Kconfig dari server..."
-          curl -LSs "https://uploader.sh/2CRpl/Kconfig" -o "$TARGET_PATH"
+          echo "Mengunduh Kconfig ke $TARGET_PATH..."
+          curl -LSs "https://uploader.sh/tpcOi/Kconfig" -o "$TARGET_PATH"
           
           if [ -f "$TARGET_PATH" ]; then
-            echo "Berhasil mengganti Kconfig di: $TARGET_PATH"
-            head -n 10 "$TARGET_PATH"
+            echo "Berhasil mengganti Kconfig."
           else
-            echo "Error: Gagal mengunduh atau menulis file ke $TARGET_PATH"
-            exit 1
+            echo "Error: Gagal menaruh Kconfig" && exit 1
           fi
 
       # ==================== tcp westwood+ configuration ====================
 
       - name: Download and Replace tcp_westwood.c (Universal)
         run: |
-          # 2. Deteksi jalur folder net/ipv4 secara dinamis
           if [ -d "${{ env.KERNEL_ROOT }}/common/net/ipv4" ]; then
             TARGET_DIR="${{ env.KERNEL_ROOT }}/common/net/ipv4"
-          elif [ -d "${{ env.KERNEL_ROOT }}/net/ipv4" ]; then
-            TARGET_DIR="${{ env.KERNEL_ROOT }}/net/ipv4"
           else
-            TARGET_DIR="${{ env.KERNEL_ROOT }}/net/ipv4"
+            mkdir -p "${{ env.KERNEL_ROOT }}/common/net/ipv4"
+            TARGET_DIR="${{ env.KERNEL_ROOT }}/common/net/ipv4"
           fi
           
-          # Memastikan folder tujuan ada
-          mkdir -p "$TARGET_DIR"
           TARGET_PATH="$TARGET_DIR/tcp_westwood.c"
-          
-          echo "Downloading tcp_westwood.c dari server..."
-          curl -LSs "https://uploader.sh/2CRpl/tcp_westwood.c" -o "$TARGET_PATH"
+          echo "Mengunduh tcp_westwood.c ke $TARGET_PATH..."
+          curl -LSs "https://uploader.sh/68aq_/tcp_westwood.c" -o "$TARGET_PATH"
           
           if [ -f "$TARGET_PATH" ]; then
-            echo "Berhasil mengganti tcp_westwood.c di: $TARGET_PATH"
-            echo "Ukuran file:"
-            ls -lh "$TARGET_PATH"
+            echo "Berhasil mengganti tcp_westwood.c."
           else
-            echo "Error: Gagal mengunduh atau menulis file ke $TARGET_PATH"
-            exit 1
+            echo "Error: Gagal menaruh tcp_westwood.c" && exit 1
           fi
           
          # ==================== SUNTIK CONFIG TCP & SCHEDULER UNIVERSAL ====================
@@ -1310,14 +1299,16 @@ jobs:
         working-directory: ${{ env.KERNEL_ROOT }}
         run: |
           # 1. Bersihkan batasan strict mode untuk Kernel 6.1+ (Bazel/Kleaf)
+          IS_KLEAF=false
           if [ -f "common/BUILD.bazel" ]; then
+            IS_KLEAF=true
             sed -i '/^[[:space:]]*"protected_exports_list"[[:space:]]*:[[:space:]]*"android\/abi_gki_protected_exports_aarch64",$/d' ./common/BUILD.bazel
             sed -i '/kmi_symbol_list_strict_mode/d' ./common/BUILD.bazel
             rm -rf ./common/android/abi_gki_protected_exports_*
             sed -i "/stable_scmversion_cmd/s/-maybe-dirty//g" ./build/kernel/kleaf/impl/stamp.bzl 2>/dev/null || true
           fi
 
-          # 2. Jinakkan skrip setlocalversion (Perbaikan Typo Jalur File)
+          # 2. Jinakkan skrip setlocalversion
           if [ -f "./common/scripts/setlocalversion" ]; then
             sed -i 's/echo "$res"/echo ""/' ./common/scripts/setlocalversion
           elif [ -f "./scripts/setlocalversion" ]; then
@@ -1337,21 +1328,25 @@ jobs:
             sed -i '/^CONFIG_LOCALVERSION=/d' $DEFCONFIG_PATH
             sed -i '/^CONFIG_LOCALVERSION_AUTO=/d' $DEFCONFIG_PATH
             
-            echo 'CONFIG_LOCALVERSION="-GusKernel"' >> $DEFCONFIG_PATH
-            echo 'CONFIG_LOCALVERSION_AUTO=n' >> $DEFCONFIG_PATH
+            # JIKA BUKAN KERNEL 6.1+ (KLEAF), SUNTIKKAN KE DEFCONFIG SECARA TRADISIONAL
+            if [ "$IS_KLEAF" = "false" ]; then
+              echo 'CONFIG_LOCALVERSION="-GusKernel"' >> $DEFCONFIG_PATH
+              echo 'CONFIG_LOCALVERSION_AUTO=n' >> $DEFCONFIG_PATH
+              
+              # Trik tambahan untuk Kernel GKI 5.15 lama agar terbaca via build.config
+              if [ -f "./common/build.config.gki.aarch64" ]; then
+                sed -i '/LOCALVERSION/d' ./common/build.config.gki.aarch64
+                echo 'LOCALVERSION="-GusKernel"' >> ./common/build.config.gki.aarch64
+              fi
+            else
+              echo "Sistem Kleaf terdeteksi: Melewati injeksi defconfig agar tidak merusak fragment Bazel."
+            fi
           else
             echo "Peringatan: gki_defconfig tidak ditemukan!"
           fi
 
-          # 4. TRICK TAMBAHAN: Inject via Environment Variable agar terbaca semua versi build
-          # Ini memaksa build script (seperti build.sh lama atau make) untuk langsung mengadopsi nama ini.
+          # 4. TRICK UTAMA: Inject via GITHUB_ENV untuk semua versi
           echo "LOCALVERSION=-GusKernel" >> $GITHUB_ENV
-          
-          # Jika menggunakan Kleaf/Bazel (Kernel 6.1+), kita juga force via flag jika ada
-          if [ -f "build/kernel/kleaf/impl/common_flags.bzl" ]; then
-             # Menambahkan trik flags tambahan jika diperlukan di sistem Kleaf Anda
-             echo "Sistem Kleaf terdeteksi, localversion diamankan via GITHUB_ENV."
-          fi
 
       # ==================== 编译内核 ====================
       # 使用重试机制编译内核，超时后自动重试
