@@ -473,6 +473,7 @@ jobs:
             CURRENT_SUB=99999
           fi
 
+          
           # 在应用主补丁前临时调整源码上下文，替代已归档的 wild 修复小补丁
           if [[ "${{ inputs.android_version }}" == "android12" && "${{ inputs.kernel_version }}" == "5.10" ]]; then
             if [[ "$CURRENT_SUB" -le 43 ]]; then
@@ -650,6 +651,20 @@ jobs:
                 fi
                 echo "已修复 Android 13 5.15 task_mmu.c 缺少 susfs_def.h 问题"
               fi
+
+              # Fix 5.15 LTS: SUSFS patch on namespace.c head hunk rejected due to context mismatch
+              if grep -q 'DEFAULT_KSU_MNT_ID\|susfs_mnt_id_ida' ./fs/namespace.c && ! grep -qF '#include <linux/susfs_def.h>' ./fs/namespace.c; then
+                echo "检测到 namespace.c 缺少 susfs_def.h，注入声明..."
+                if grep -qF '#include <linux/mnt_idmapping.h>' ./fs/namespace.c; then
+                  sed -i '/#include <linux\/mnt_idmapping.h>/a #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT\n#include <linux\/susfs_def.h>\n#endif' ./fs/namespace.c
+                else
+                  sed -i '0,/^#include /s//#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT\n#include <linux\/susfs_def.h>\n#endif\n&/' ./fs/namespace.c
+                fi
+
+                if ! grep -q 'extern bool susfs_is_current_ksu_domain' ./fs/namespace.c; then
+                  sed -i '/#include "internal.h"/a \\n#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT\nextern bool susfs_is_current_ksu_domain(void);\nextern struct static_key_true susfs_is_sdcard_android_data_not_decrypted;\n\n#define CL_COPY_MNT_NS BIT(25)\n\n#endif' ./fs/namespace.c
+                fi
+              fi
             fi
 
             # Android 14 - 6.1 修复
@@ -678,7 +693,7 @@ jobs:
             # Android 15 - 6.6 修复
             if [[ "${{ inputs.android_version }}" == "android15" && "${{ inputs.kernel_version }}" == "6.6" ]]; then
               # 修复 6.6.50~6.6.97: fs/proc/base.c 头部 hunk 失配，导致 susfs_def.h 漏打
-              if grep -q 'AS_FLAGS_SUS_MAP\|susfs_is_current_proc_umounted\|SUSFS_IS_INODE_SUS_MAP\|SUSFS_IS_INODE_OPEN_REDIRECT' ./fs/proc/base.c && ! grep -qF 'susfs_def.h' ./fs/proc/base.c; then
+              if grep -q 'AS_FLAGS_SUS_MAP\|susfs_is_current_proc_umounted\|SUSFS_IS_INODE_SUS_MAP\|SUSFS_IS_INODE_OPEN_REDIRECT' ./fs/proc/base.c && ! grep -qF 'susfs_def.h' ././fs/proc/base.c; then
                 if ! grep -qF '#include <linux/dma-buf.h>' ./fs/proc/base.c; then
                   sed -i '/#include <linux\/cpufreq_times.h>/a #include <linux\/dma-buf.h>' ./fs/proc/base.c
                 fi
