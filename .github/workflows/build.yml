@@ -1566,11 +1566,7 @@ jobs:
           
           
           <b>changelog:</b>
-          • Fixed Crash Chrome/Brave browser
-          • Delete localversion naming
-          • Delete localversion auto
-          • Added TCP congestion with Westwood mod
-          • Added Cake queuing
+          • Update SUSFS to 2.2.0
           
           ━━━━━━━━━━━━━━━━━━━━━
           🔢 <b>Total Files:</b> $COUNT"
