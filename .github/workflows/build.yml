@@ -1323,14 +1323,14 @@ jobs:
             sed -i "/stable_scmversion_cmd/s/-maybe-dirty//g" ./build/kernel/kleaf/impl/stamp.bzl 2>/dev/null || true
           fi
 
-          # 2. Jinakkan skrip setlocalversion
+          # 2. Jinakkan skrip setlocalversion agar versi bersih (tidak ada tanda '+' atau 'dirty')
           if [ -f "./common/scripts/setlocalversion" ]; then
             sed -i 's/echo "$res"/echo ""/' ./common/scripts/setlocalversion
           elif [ -f "./scripts/setlocalversion" ]; then
             sed -i 's/echo "$res"/echo ""/' ./scripts/setlocalversion
           fi
 
-          # 3. Suntikkan konfigurasi GusKernel ke gki_defconfig
+          # 3. Jalur Suntik Tradisional ke gki_defconfig (Untuk Kernel 5.15 ke bawah)
           DEFCONFIG_PATH=""
           if [ -f "./common/arch/arm64/configs/gki_defconfig" ]; then
             DEFCONFIG_PATH="./common/arch/arm64/configs/gki_defconfig"
@@ -1343,26 +1343,31 @@ jobs:
             sed -i '/^CONFIG_LOCALVERSION=/d' $DEFCONFIG_PATH
             sed -i '/^CONFIG_LOCALVERSION_AUTO=/d' $DEFCONFIG_PATH
             
-            # JIKA BUKAN KERNEL 6.1+ (KLEAF), SUNTIKKAN KE DEFCONFIG SECARA TRADISIONAL
             if [ "$IS_KLEAF" = "false" ]; then
+              # Menyuntikkan langsung ke file konfigurasi untuk kernel lama
               echo 'CONFIG_LOCALVERSION="-GusKernel"' >> $DEFCONFIG_PATH
               echo 'CONFIG_LOCALVERSION_AUTO=n' >> $DEFCONFIG_PATH
               
-              # Trik tambahan untuk Kernel GKI 5.15 lama agar terbaca via build.config
+              # Trik tambahan khusus GKI 5.15 yang menggunakan build.config
               if [ -f "./common/build.config.gki.aarch64" ]; then
                 sed -i '/LOCALVERSION/d' ./common/build.config.gki.aarch64
                 echo 'LOCALVERSION="-GusKernel"' >> ./common/build.config.gki.aarch64
               fi
             else
-              echo "Sistem Kleaf terdeteksi: Melewati injeksi defconfig agar tidak merusak fragment Bazel."
+              echo "Sistem Kleaf terdeteksi: Injeksi defconfig dilewati untuk menghindari konflik fragment Bazel."
             fi
           else
             echo "Peringatan: gki_defconfig tidak ditemukan!"
           fi
 
-          # 4. TRICK UTAMA: Inject via GITHUB_ENV untuk semua versi
+          # 4. TRICK UTAMA: Inject via GITHUB_ENV agar berlaku di semua versi kernel
           echo "LOCALVERSION=-GusKernel" >> $GITHUB_ENV
-
+          
+          # Trik Tambahan khusus Kernel 6.1+ (Kleaf/Bazel) agar flag dilempar ke build args
+          if [ "$IS_KLEAF" = "true" ]; then
+            echo "EXTRA_BUILD_ARGS=--nkmi_symbol_list_strict_mode --@pointer_types_extra_args=--localversion=-GusKernel" >> $GITHUB_ENV
+          fi
+          
       # ==================== 编译内核 ====================
       # 使用重试机制编译内核，超时后自动重试
       - name: 构建——如出错为该KSU暂时未同步SUSFS代码或编译时错误(等待该KSU仓库修复)
@@ -1411,9 +1416,9 @@ jobs:
                 LTO_FLAG="--lto=none"
               fi
               
-              # 【DI SINI KITA TAMBAHKAN FLAG NYA】
-              # Menambahkan --nokleaf_localversion agar Bazel mematuhi CONFIG_LOCALVERSION="-GusKernel" yang kita buat
-              tools/bazel build --disk_cache=/home/runner/.cache/bazel --config=fast --nokleaf_localversion $LTO_FLAG $FRAG_FLAG //common:kernel_aarch64_dist || exit 1
+              # 【PERUBAHAN DI SINI】
+              # Memasukkan $EXTRA_BUILD_ARGS (berisi flag penamaan Kleaf dari step sebelumnya) ke perintah Bazel
+              tools/bazel build --disk_cache=/home/runner/.cache/bazel --config=fast --nokleaf_localversion $LTO_FLAG $FRAG_FLAG $EXTRA_BUILD_ARGS //common:kernel_aarch64_dist || exit 1
               strings ./bazel-bin/common/kernel_aarch64/Image | grep 'Linux version'
             fi
 
