@@ -1587,8 +1587,11 @@ jobs:
           - WildKSU
           - YukiSU
           - KernelSU / Pershoot
-          - VortexSU
-          - KamiSU
+          - KernelSU Official / Tiann
+          - Kernelsu / 5ec1cff
+          - KernelSU / rsuntk
+          - VortexSU / kingfinik98
+          - KamiSU / Kaminarich
           - AgnesSU
           - KittiSU
 
