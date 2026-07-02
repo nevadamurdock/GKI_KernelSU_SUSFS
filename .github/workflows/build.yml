@@ -1313,10 +1313,12 @@ jobs:
       - name: 配置内核名称 (GusKernel)
         working-directory: ${{ env.KERNEL_ROOT }}
         run: |
-          # 1. Bersihkan batasan strict mode untuk Kernel 6.1+ (Bazel/Kleaf)
+          # 1. Bersihkan batasan strict mode KHUSUS jika benar-benar menggunakan Kernel 6.1+ (Bazel/Kleaf)
+          # Kita cek: Jika TIDAK ADA build/build.sh DAN ADA common/BUILD.bazel, baru kita anggap Kleaf asli.
           IS_KLEAF=false
-          if [ -f "common/BUILD.bazel" ]; then
+          if [ ! -f "build/build.sh" ] && [ -f "common/BUILD.bazel" ]; then
             IS_KLEAF=true
+            echo "Konfirmasi: Ini adalah sistem Kleaf asli (Kernel 6.1+)"
             sed -i '/^[[:space:]]*"protected_exports_list"[[:space:]]*:[[:space:]]*"android\/abi_gki_protected_exports_aarch64",$/d' ./common/BUILD.bazel
             sed -i '/kmi_symbol_list_strict_mode/d' ./common/BUILD.bazel
             rm -rf ./common/android/abi_gki_protected_exports_*
@@ -1330,7 +1332,7 @@ jobs:
             sed -i 's/echo "$res"/echo ""/' ./scripts/setlocalversion
           fi
 
-          # 3. Jalur Suntik Tradisional ke gki_defconfig (Untuk Kernel 5.15 ke bawah)
+          # 3. Jalur Suntik Tradisional ke gki_defconfig
           DEFCONFIG_PATH=""
           if [ -f "./common/arch/arm64/configs/gki_defconfig" ]; then
             DEFCONFIG_PATH="./common/arch/arm64/configs/gki_defconfig"
@@ -1344,7 +1346,7 @@ jobs:
             sed -i '/^CONFIG_LOCALVERSION_AUTO=/d' $DEFCONFIG_PATH
             
             if [ "$IS_KLEAF" = "false" ]; then
-              # Menyuntikkan langsung ke file konfigurasi untuk kernel lama
+              echo "Mengeksekusi injeksi defconfig tradisional untuk Kernel 5.15 kebawah..."
               echo 'CONFIG_LOCALVERSION="-GusKernel"' >> $DEFCONFIG_PATH
               echo 'CONFIG_LOCALVERSION_AUTO=n' >> $DEFCONFIG_PATH
               
