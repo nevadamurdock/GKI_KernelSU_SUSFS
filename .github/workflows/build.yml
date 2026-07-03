@@ -1418,9 +1418,9 @@ jobs:
                 LTO_FLAG="--lto=none"
               fi
               
-              # 【SUDAH DIPERBAIKI】
-              # Menghapus flag @pointer_types_extra_args yang salah dan menggantinya dengan flag penamaan resmi Kleaf GKI
-              tools/bazel build --disk_cache=/home/runner/.cache/bazel --config=fast --nokleaf_localversion $LTO_FLAG $FRAG_FLAG --nokmi_symbol_list_strict_mode --@kleaf//common:localversion=-GusKernel //common:kernel_aarch64_dist || exit 1
+              # 【VERSI BERSIH & AMAN】
+              # Menghapus total flag KMI strict mode dan localversion eksternal yang memicu konflik paket di Bazel
+              tools/bazel build --disk_cache=/home/runner/.cache/bazel --config=fast --nokleaf_localversion $LTO_FLAG $FRAG_FLAG //common:kernel_aarch64_dist || exit 1
               strings ./bazel-bin/common/kernel_aarch64/Image | grep 'Linux version'
             fi
 
