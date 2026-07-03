@@ -1419,8 +1419,8 @@ jobs:
               fi
               
               # 【SUDAH DIPERBAIKI】
-              # Mengganti $EXTRA_BUILD_ARGS yang typo dengan flag resmi Kleaf yang benar (--nokmi_symbol_list_strict_mode)
-              tools/bazel build --disk_cache=/home/runner/.cache/bazel --config=fast --nokleaf_localversion $LTO_FLAG $FRAG_FLAG --nokmi_symbol_list_strict_mode --@pointer_types_extra_args=--localversion=-GusKernel //common:kernel_aarch64_dist || exit 1
+              # Menghapus flag @pointer_types_extra_args yang salah dan menggantinya dengan flag penamaan resmi Kleaf GKI
+              tools/bazel build --disk_cache=/home/runner/.cache/bazel --config=fast --nokleaf_localversion $LTO_FLAG $FRAG_FLAG --nokmi_symbol_list_strict_mode --@kleaf//common:localversion=-GusKernel //common:kernel_aarch64_dist || exit 1
               strings ./bazel-bin/common/kernel_aarch64/Image | grep 'Linux version'
             fi
 
