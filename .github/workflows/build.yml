@@ -1404,6 +1404,15 @@ jobs:
               FRAG="common/arch/arm64/configs/ksu.fragment"
               diff "$DEFCONFIG.orig" "$DEFCONFIG" | grep '^>' | sed 's/^> //; s/^[[:space:]]*//' > "$FRAG" || true
               cp "$DEFCONFIG.orig" "$DEFCONFIG"
+              
+              # 【PERUBAHAN DI SINI】
+              # Hapus konfigurasi TCP & CAKE yang memicu error validasi Bazel
+              sed -i '/CONFIG_TCP_CONG/d' "$FRAG"
+              sed -i '/CONFIG_DEFAULT_TCP_CONG/d' "$FRAG"
+              sed -i '/CONFIG_NET_SCH/d' "$FRAG"
+              sed -i '/CONFIG_DEFAULT_CAKE/d' "$FRAG"
+              sed -i '/CONFIG_DEFAULT_NET_SCH/d' "$FRAG"
+
               echo "=== KSU Fragment 内容 ==="
               cat "$FRAG"
               echo "========================="
@@ -1418,11 +1427,7 @@ jobs:
                 LTO_FLAG="--lto=none"
               fi
               
-              # 【PERUBAHAN AMAN】
-              # 1. Matikan fitur trimming non-GKI lewat env agar Westwood/Cake tidak didepak Bazel
-              export KLEAF_TRIM_NON_GKI=0
-              
-              # 2. Jalankan kompilasi dengan perintah Bazel yang bersih standar murni GKI
+              # Jalankan kompilasi murni GKI Bazel
               tools/bazel build --disk_cache=/home/runner/.cache/bazel --config=fast --nokleaf_localversion $LTO_FLAG $FRAG_FLAG //common:kernel_aarch64_dist || exit 1
               strings ./bazel-bin/common/kernel_aarch64/Image | grep 'Linux version'
             fi
@@ -1433,7 +1438,7 @@ jobs:
             echo "当前 KSU 最新提交日期: ${KSU_LATEST_COMMIT_DATE}"
             echo "当前 SUSFS 最新提交日期: ${SUSFS_LATEST_COMMIT_DATE}"
             echo "如果日期不同或相差过远则补丁失效、编译失败"
-
+            
       # ==================== 准备 Boot 镜像 ====================
       # 复制编译产物到工作目录
       - name: 准备 Boot 镜像
