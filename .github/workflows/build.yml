@@ -1418,9 +1418,12 @@ jobs:
                 LTO_FLAG="--lto=none"
               fi
               
-              # 【SUDAH DIPERBAIKI】
-              # Menambahkan --kconfig_werror=false agar Bazel tidak mematikan build saat konfigurasi tambahan (Westwood/Cake) gagal diterapkan
-              tools/bazel build --disk_cache=/home/runner/.cache/bazel --config=fast --nokleaf_localversion $LTO_FLAG $FRAG_FLAG --kconfig_werror=false //common:kernel_aarch64_dist || exit 1
+              # 【PERUBAHAN AMAN】
+              # 1. Matikan fitur trimming non-GKI lewat env agar Westwood/Cake tidak didepak Bazel
+              export KLEAF_TRIM_NON_GKI=0
+              
+              # 2. Jalankan kompilasi dengan perintah Bazel yang bersih standar murni GKI
+              tools/bazel build --disk_cache=/home/runner/.cache/bazel --config=fast --nokleaf_localversion $LTO_FLAG $FRAG_FLAG //common:kernel_aarch64_dist || exit 1
               strings ./bazel-bin/common/kernel_aarch64/Image | grep 'Linux version'
             fi
 
