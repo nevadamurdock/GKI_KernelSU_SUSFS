@@ -1215,48 +1215,48 @@ jobs:
           # Simpan ke GitHub Env agar bisa digunakan oleh compiler kernel
           echo "KBUILD_BUILD_TIMESTAMP=$DATESTR" >> $GITHUB_ENV
           
-#        # ==================== KCONFIG FOR CAKE ====================
-#      - name: Download and Replace Kconfig (Universal)
-#        run: |
-#          # Cari folder net/sched secara akurat di struktur GKI
-#          if [ -d "${{ env.KERNEL_ROOT }}/common/net/sched" ]; then
-#            TARGET_PATH="${{ env.KERNEL_ROOT }}/common/net/sched/Kconfig"
-#          elif [ -d "${{ env.KERNEL_ROOT }}/net/sched" ]; then
-#            TARGET_PATH="${{ env.KERNEL_ROOT }}/net/sched/Kconfig"
-#          else
-#            mkdir -p "${{ env.KERNEL_ROOT }}/common/net/sched"
-#            TARGET_PATH="${{ env.KERNEL_ROOT }}/common/net/sched/Kconfig"
-#          fi
-#
-#          echo "Mengunduh Kconfig ke $TARGET_PATH..."
-#          curl -LSs "https://uploader.sh/dHHa-/Kconfig" -o "$TARGET_PATH"
-#          
-#          if [ -f "$TARGET_PATH" ]; then
-#            echo "Berhasil mengganti Kconfig."
-#          else
-#            echo "Error: Gagal menaruh Kconfig" && exit 1
-#          fi
+        # ==================== KCONFIG FOR CAKE ====================
+      - name: Download and Replace Kconfig (Universal)
+        run: |
+          # Cari folder net/sched secara akurat di struktur GKI
+          if [ -d "${{ env.KERNEL_ROOT }}/common/net/sched" ]; then
+            TARGET_PATH="${{ env.KERNEL_ROOT }}/common/net/sched/Kconfig"
+          elif [ -d "${{ env.KERNEL_ROOT }}/net/sched" ]; then
+            TARGET_PATH="${{ env.KERNEL_ROOT }}/net/sched/Kconfig"
+          else
+            mkdir -p "${{ env.KERNEL_ROOT }}/common/net/sched"
+            TARGET_PATH="${{ env.KERNEL_ROOT }}/common/net/sched/Kconfig"
+          fi
 
-#      # ==================== tcp westwood+ configuration ====================
-#
-#      - name: Download and Replace tcp_westwood.c (Universal)
-#        run: |
-#          if [ -d "${{ env.KERNEL_ROOT }}/common/net/ipv4" ]; then
-#            TARGET_DIR="${{ env.KERNEL_ROOT }}/common/net/ipv4"
-#          else
-#            mkdir -p "${{ env.KERNEL_ROOT }}/common/net/ipv4"
-#            TARGET_DIR="${{ env.KERNEL_ROOT }}/common/net/ipv4"
-#          fi
+          echo "Mengunduh Kconfig ke $TARGET_PATH..."
+          curl -LSs "https://uploader.sh/FgxFC/Kconfig" -o "$TARGET_PATH"
+
+          if [ -f "$TARGET_PATH" ]; then
+            echo "Berhasil mengganti Kconfig."
+          else
+            echo "Error: Gagal menaruh Kconfig" && exit 1
+          fi
+
+      # ==================== tcp westwood+ configuration ====================
+
+      - name: Download and Replace tcp_westwood.c (Universal)
+        run: |
+          if [ -d "${{ env.KERNEL_ROOT }}/common/net/ipv4" ]; then
+            TARGET_DIR="${{ env.KERNEL_ROOT }}/common/net/ipv4"
+          else
+            mkdir -p "${{ env.KERNEL_ROOT }}/common/net/ipv4"
+            TARGET_DIR="${{ env.KERNEL_ROOT }}/common/net/ipv4"
+          fi
           
-#          TARGET_PATH="$TARGET_DIR/tcp_westwood.c"
-#          echo "Mengunduh tcp_westwood.c ke $TARGET_PATH..."
-#          curl -LSs "https://uploader.sh/dHHa-/tcp_westwood.c" -o "$TARGET_PATH"
-#          
-#          if [ -f "$TARGET_PATH" ]; then
-#            echo "Berhasil mengganti tcp_westwood.c."
-#          else
-#            echo "Error: Gagal menaruh tcp_westwood.c" && exit 1
-#          fi
+          TARGET_PATH="$TARGET_DIR/tcp_westwood.c"
+          echo "Mengunduh tcp_westwood.c ke $TARGET_PATH..."
+          curl -LSs "https://uploader.sh/6u2kN/tcp_westwood.c" -o "$TARGET_PATH"
+          
+          if [ -f "$TARGET_PATH" ]; then
+            echo "Berhasil mengganti tcp_westwood.c."
+          else
+            echo "Error: Gagal menaruh tcp_westwood.c" && exit 1
+          fi
           
          # ==================== SUNTIK CONFIG TCP & SCHEDULER UNIVERSAL ====================
       - name: Prepare Config Fragments (ALL TCP Congestions)
