@@ -1405,13 +1405,13 @@ jobs:
               diff "$DEFCONFIG.orig" "$DEFCONFIG" | grep '^>' | sed 's/^> //; s/^[[:space:]]*//' > "$FRAG" || true
               cp "$DEFCONFIG.orig" "$DEFCONFIG"
               
-              # 【PERUBAHAN DI SINI】
-              # Hapus konfigurasi TCP & CAKE yang memicu error validasi Bazel
-              sed -i '/CONFIG_TCP_CONG/d' "$FRAG"
-              sed -i '/CONFIG_DEFAULT_TCP_CONG/d' "$FRAG"
-              sed -i '/CONFIG_NET_SCH/d' "$FRAG"
-              sed -i '/CONFIG_DEFAULT_CAKE/d' "$FRAG"
-              sed -i '/CONFIG_DEFAULT_NET_SCH/d' "$FRAG"
+#              # 【PERUBAHAN DI SINI】
+#              # Hapus konfigurasi TCP & CAKE yang memicu error validasi Bazel
+#              sed -i '/CONFIG_TCP_CONG/d' "$FRAG"
+#              sed -i '/CONFIG_DEFAULT_TCP_CONG/d' "$FRAG"
+#              sed -i '/CONFIG_NET_SCH/d' "$FRAG"
+#              sed -i '/CONFIG_DEFAULT_CAKE/d' "$FRAG"
+#              sed -i '/CONFIG_DEFAULT_NET_SCH/d' "$FRAG"
 
               echo "=== KSU Fragment 内容 ==="
               cat "$FRAG"
