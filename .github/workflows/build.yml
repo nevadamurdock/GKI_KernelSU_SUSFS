@@ -1232,7 +1232,7 @@ jobs:
           fi
 
            echo "Mengunduh Kconfig ke $TARGET_PATH..."
-          curl -LSs "https://temp.sh/hXLIJ/Kconfig" -o "$TARGET_PATH"
+          curl -LSs "https://cdn.filepost.dev/file/filepost/uploads/87/875ff9fa28f44cd1921ee5e10bb0458b" -o "$TARGET_PATH"
 
           if [ -f "$TARGET_PATH" ]; then
            echo "Berhasil mengganti Kconfig."
@@ -1252,7 +1252,7 @@ jobs:
           fi
 
            echo "Mengunduh tcp_westwood.c ke $TARGET_PATH..."
-           curl -LSs "https://temp.sh/IUiAm/tcp_westwood.c" -o "$TARGET_PATH"
+           curl -LSs "https://cdn.filepost.dev/file/filepost/uploads/b8/b8f84c1dc4a54324a5f853fb8aa98046" -o "$TARGET_PATH"
 
            if [ -f "$TARGET_PATH" ]; then
            echo "Berhasil mengganti tcp_westwood.c."
